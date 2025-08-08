@@ -52,11 +52,37 @@
     <main class="chat-main">
 
         <div class="chat-container">
+            @{
+                // 시스템 메시지가 있다면 가장 먼저 표시
+                var systemMsg = Messages.FirstOrDefault(m => m.Role == ChatRole.System);
+                if (systemMsg != null)
+                {
+                    var systemIndex = Messages.IndexOf(systemMsg);
+                    <div class="msg system @(EditingMessageIndex == systemIndex ? "editing" : "")" @onclick="() => StartEditMessage(systemIndex)">
+                        @if (EditingMessageIndex == systemIndex)
+                        {
+                            <div class="editing-container" @onclick:stopPropagation="true">
+                                <textarea id="edit-textarea-@systemIndex" class="form-control mb-2" @bind="EditingText" @bind:after="() => AutoResizeTextareaAsync(systemIndex)" style="min-height: 120px; resize: vertical; overflow-y: hidden;"></textarea>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary btn-sm" @onclick="() => SaveEditMessage(systemIndex)">저장</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEditMessage">취소</button>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="system-badge">시스템</div>
+                            @systemMsg.Text
+                        }
+                    </div>
+                }
+            }
+            
             @for (int i = 0; i < Messages.Count; i++)
             {
                 var index = i;
                 var m = Messages[i];
-                if (m.Role != ChatRole.System) // 시스템 메시지는 표시하지 않음
+                if (m.Role != ChatRole.System) // 시스템 메시지는 위에서 별도로 표시됨
                 {
                     <div class="msg @(m.Role == ChatRole.User ? "user" : "assistant") @(EditingMessageIndex == index ? "editing" : "")" @onclick="() => StartEditMessage(index)">
                         @if (EditingMessageIndex == index)
@@ -492,17 +518,23 @@
     {
         await JS.InvokeVoidAsync("localStorage.setItem", "SYSTEM_MESSAGE", SystemMessage ?? string.Empty);
         // 현재 세션의 첫 번째 메시지(시스템 메시지) 업데이트
-        if (Messages.Count > 0 && Messages[0].Role == ChatRole.System)
+        var systemMsg = Messages.FirstOrDefault(m => m.Role == ChatRole.System);
+        if (systemMsg != null)
         {
-            Messages[0] = new ChatMessage(ChatRole.System, SystemMessage);
+            var index = Messages.IndexOf(systemMsg);
+            Messages[index] = new ChatMessage(ChatRole.System, SystemMessage);
+        }
+        else
+        {
+            // 시스템 메시지가 없으면 추가
+            Messages.Insert(0, new ChatMessage(ChatRole.System, SystemMessage));
         }
         await SaveSessions();
     }
 
     void StartEditMessage(int index)
     {
-        if (Messages[index].Role == ChatRole.System) return; // 시스템 메시지는 편집 불가
-        
+        // 시스템 메시지도 편집 가능하게 변경
         EditingMessageIndex = index;
         EditingText = Messages[index].Text ?? string.Empty;
         
@@ -531,6 +563,14 @@
         if (EditingMessageIndex == index)
         {
             Messages[index] = new ChatMessage(Messages[index].Role, EditingText);
+            
+            // 시스템 메시지를 편집한 경우, SystemMessage 변수도 업데이트
+            if (Messages[index].Role == ChatRole.System)
+            {
+                SystemMessage = EditingText;
+                await JS.InvokeVoidAsync("localStorage.setItem", "SYSTEM_MESSAGE", SystemMessage);
+            }
+            
             EditingMessageIndex = null;
             EditingText = string.Empty;
             await SaveSessions();
@@ -545,7 +585,23 @@
 
     async Task DeleteMessage(int index)
     {
-        if (Messages[index].Role == ChatRole.System) return; // 시스템 메시지는 삭제 불가
+        // 시스템 메시지는 삭제하지 않고 기본값으로 재설정
+        if (Messages[index].Role == ChatRole.System)
+        {
+            Messages[index] = new ChatMessage(ChatRole.System, "You are a helpful assistant.");
+            SystemMessage = "You are a helpful assistant.";
+            await JS.InvokeVoidAsync("localStorage.setItem", "SYSTEM_MESSAGE", SystemMessage);
+            
+            // 편집 중이었다면 편집 상태 해제
+            if (EditingMessageIndex == index)
+            {
+                EditingMessageIndex = null;
+                EditingText = string.Empty;
+            }
+            
+            await SaveSessions();
+            return;
+        }
         
         Messages.RemoveAt(index);
         
@@ -576,7 +632,15 @@
 }
 
 <style>
-.chat-layout { display: grid; grid-template-columns: 260px 1fr; height: 100vh; position: relative; }
+.chat-layout { 
+    display: grid; 
+    grid-template-columns: 260px 1fr; 
+    /* 기본 100vh, 지원하면 100dvh, 마지막으로 JS가 주입하는 실측 높이 사용 */
+    height: 100vh; 
+    height: 100dvh; 
+    height: var(--app-vh, 100dvh);
+    position: relative; 
+}
 
 /* 모바일 헤더 */
 .mobile-header {
@@ -639,16 +703,53 @@
 }
 .delete-btn:hover { background: #f8d7da; opacity: 1; }
 
-.chat-main { display: grid; grid-template-rows: 1fr auto; height: 100%; }
-.chat-container { padding: 1rem; display: flex; flex-direction: column; gap: .5rem; overflow: auto; }
+.chat-main { 
+    display: grid; 
+    grid-template-rows: 1fr auto; 
+    height: 100%; 
+}
+.chat-container { 
+    padding: 1rem; 
+    display: flex; 
+    flex-direction: column; 
+    gap: .5rem; 
+    overflow: auto; 
+    margin-bottom: 1rem;
+    padding-bottom: 96px; /* 입력 영역을 고려한 적정 여백 */
+}
 .msg { padding: .6rem .8rem; border-radius: 8px; white-space: pre-wrap; cursor: pointer; transition: background-color 0.2s; position: relative; }
 .msg:hover { opacity: 0.8; }
 .msg.user { background: #e9f5ff; align-self: flex-end; }
 .msg.assistant { background: #f7f7f8; align-self: flex-start; }
+.msg.system { 
+    background: #fff3e0; /* 주황색 배경 */
+    border: 1px solid #ffcc80; /* 주황색 테두리 */
+    align-self: stretch; 
+    margin-bottom: 1rem; 
+    position: relative;
+    padding-top: 1.8rem; /* 배지를 위한 여유 공간 */
+}
+.system-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #ff9800;
+    color: white;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 0 0 4px 0;
+    font-weight: bold;
+}
 .msg.editing { align-self: stretch; max-width: 100%; }
 .editing-container { cursor: default; width: 100%; }
 .editing-container .form-control { width: 100%; }
-.composer { padding: .75rem; border-top: 1px solid #eee; }
+.composer { 
+    padding: .75rem; 
+    border-top: 1px solid #eee;
+    background: #fff;
+    /* 안전영역 고려하되 과도하지 않게 */
+    padding-bottom: calc(.75rem + env(safe-area-inset-bottom, 12px));
+}
 
 .input-section { }
 .model-selection-row { }
@@ -720,11 +821,13 @@
 }
 
 @@media (max-width: 768px) {
-  .chat-layout { 
-    grid-template-columns: 1fr; 
-    height: 100vh;
-    padding-top: 60px; /* 모바일 헤더 공간 확보 */
-  }
+    .chat-layout { 
+        grid-template-columns: 1fr; 
+        height: 100vh;
+        height: 100dvh;
+        height: var(--app-vh, 100dvh);
+        padding-top: 60px; /* 모바일 헤더 공간 확보 */
+    }
 
   /* 모바일 헤더 표시 */
   .mobile-header {
@@ -752,12 +855,20 @@
     transform: translateX(0);
   }
   
-  .chat-main {
-    height: calc(100vh - 60px); /* 모바일 헤더 높이 제외 */
-  }
+    .chat-main {
+        height: calc(100vh - 60px); /* fallback */
+        height: calc(100dvh - 60px);
+        height: calc(var(--app-vh, 100dvh) - 60px);
+    }
   
   .composer {
     padding: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 20px)); /* 기본값 20px 추가 */
+    margin-bottom: env(safe-area-inset-bottom, 20px); /* 기본값 20px 추가 */
+  }
+  
+  .chat-container {
+    padding-bottom: 120px; /* 충분한 여백 확보 */
   }
   
   .model-selection-row {
