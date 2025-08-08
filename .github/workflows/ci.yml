@@ -45,10 +45,15 @@ jobs:
         working-directory: src
         run: |
           set -e
-          for proj in $(dotnet sln list | grep Tests || true); do
-            dotnet add "$proj" package JunitXml.TestLogger || true
-            dotnet add "$proj" package altcover || true
-          done
+          # Only add test packages if test projects exist
+          if dotnet sln list | grep -q Tests; then
+            for proj in $(dotnet sln list | grep Tests); do
+              dotnet add "$proj" package JunitXml.TestLogger || true
+              dotnet add "$proj" package altcover || true
+            done
+          else
+            echo "No test projects found"
+          fi
 
       - name: Restore & Build
         working-directory: src
@@ -60,16 +65,26 @@ jobs:
       - name: Test (JUnit)
         working-directory: src
         run: |
-          dotnet test --configuration Release --no-build \
-            --logger "junit;LogFileName=Report.xml"
+          # Only run tests if test projects exist
+          if dotnet sln list | grep -q Tests; then
+            dotnet test --configuration Release --no-build \
+              --logger "junit;LogFileName=Report.xml"
+          else
+            echo "No test projects found, skipping tests"
+          fi
 
       - name: Coverage (AltCover)
         working-directory: src
         run: |
-          dotnet test --configuration Release --no-build \
-            /p:AltCover=true \
-            /p:AltCoverReport="altcover.xml" \
-            /p:AltCoverAssemblyExcludeFilter='(xunit.*)|(System.*)|(.*Tests)'
+          # Only run coverage if test projects exist
+          if dotnet sln list | grep -q Tests; then
+            dotnet test --configuration Release --no-build \
+              /p:AltCover=true \
+              /p:AltCoverReport="altcover.xml" \
+              /p:AltCoverAssemblyExcludeFilter='(xunit.*)|(System.*)|(.*Tests)'
+          else
+            echo "No test projects found, skipping coverage"
+          fi
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -82,17 +97,18 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Repository Meta
-        uses: varunsridharan/action-repository-meta@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Publish (dotnet)
         working-directory: src
         run: |
           dotnet publish -c Release -o ../docs
-          sed -i 's%<base href="/"%<base href="/${{ github.event.repository.name }}/"%g' ../docs/wwwroot/index.html || true
+          # Fix base href for GitHub Pages
+          if [ -f ../docs/wwwroot/index.html ]; then
+            sed -i 's%<base href="/"%<base href="/${{ github.event.repository.name }}/"%g' ../docs/wwwroot/index.html || true
+          fi
+          # Create .nojekyll file to disable Jekyll processing
           touch ../docs/wwwroot/.nojekyll
+          # Ensure the directory exists and has content
+          ls -la ../docs/wwwroot/
 
       - name: Upload site artifact (for Pages)
         uses: actions/upload-pages-artifact@v3
@@ -102,7 +118,7 @@ jobs:
   deploy_pages:
     name: Deploy to GitHub Pages
     needs: build_and_test
-    if: github.event_name == 'push' && github.ref_name == 'main'
+    if: github.event_name == 'push' && github.ref_name == 'master'
     runs-on: ubuntu-latest
 
     permissions:
