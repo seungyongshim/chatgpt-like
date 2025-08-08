@@ -53,6 +53,7 @@ jobs:
         run: |
           dotnet publish -c Release -o ../docs
           sed -i 's%<base href="/"%<base href="/${{ github.event.repository.name }}/"%g' ../docs/wwwroot/index.html
+          cat ../docs/wwwroot/index.html
           touch ../docs/wwwroot/.nojekyll
           # Ensure the directory exists and has content
           ls -la ../docs/wwwroot/
