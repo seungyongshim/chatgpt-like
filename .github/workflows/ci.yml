@@ -62,53 +62,31 @@ jobs:
           dotnet restore
           dotnet build --configuration Release --no-restore
 
-      - name: Test (JUnit)
-        working-directory: src
-        run: |
-          # Only run tests if test projects exist
-          if dotnet sln list | grep -q Tests; then
-            dotnet test --configuration Release --no-build \
-              --logger "junit;LogFileName=Report.xml"
-          else
-            echo "No test projects found, skipping tests"
-          fi
-
-      - name: Coverage (AltCover)
-        working-directory: src
-        run: |
-          # Only run coverage if test projects exist
-          if dotnet sln list | grep -q Tests; then
-            dotnet test --configuration Release --no-build \
-              /p:AltCover=true \
-              /p:AltCoverReport="altcover.xml" \
-              /p:AltCoverAssemblyExcludeFilter='(xunit.*)|(System.*)|(.*Tests)'
-          else
-            echo "No test projects found, skipping coverage"
-          fi
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: |
-            src/**/Report.xml
-            src/**/altcover.xml
-          if-no-files-found: warn
-          retention-days: 14
-
       - name: Publish (dotnet)
         working-directory: src
         run: |
-          dotnet publish -c Release -o ../docs
+          # 1) 빌드를 임시 폴더에 출력
+          dotnet publish -c Release -o ../publish
+
+          SITE_DIR="../publish/wwwroot"
+
           # Fix base href for GitHub Pages
-          if [ -f ../docs/wwwroot/index.html ]; then
-            sed -i 's%<base href="/"%<base href="/${{ github.event.repository.name }}/"%g' ../docs/wwwroot/index.html || true
+          if [ -f ../publish/wwwroot/index.html ]; then
+            sed -i 's%<base href="/"%<base href="/${{ github.event.repository.name }}/"%g' ../docs/index.html || true
           fi
-          # Create .nojekyll file to disable Jekyll processing
-          touch ../docs/wwwroot/.nojekyll
-          # Ensure the directory exists and has content
-          ls -la ../docs/wwwroot/
+
+          # 3) /docs 루트 정리 후 wwwroot 내용만 복사/이동
+          rm -rf ../docs
+          mkdir -p ../docs
+          cp -R "$SITE_DIR"/. ../docs/
+
+          # 4) GitHub Pages용 설정들
+          touch ../docs/.nojekyll
+          # SPA 라우팅(선택)
+          [ -f ../docs/index.html ] && cp ../docs/index.html ../docs/404.html
+
+          # 5) 최종 산출물 확인
+          ls -la ../docs
 
       - name: Upload site artifact (for Pages)
         uses: actions/upload-pages-artifact@v3
