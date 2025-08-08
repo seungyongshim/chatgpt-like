@@ -6,12 +6,10 @@ on:
   pull_request:
     branches: ['*']
 
-# 중복 실행 방지(같은 브랜치에서 최신만 남김)
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# 워크플로우 전체 기본 권한(필요한 job에서만 추가로 권한 확장)
 permissions:
   contents: read
 
@@ -42,10 +40,6 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-
-      - name: Start infrastructure (docker compose)
-        run: |
-          docker compose -f infrastructure/docker-compose.yml up -d --wait
 
       - name: Add test packages (if missing)
         working-directory: src
@@ -88,7 +82,6 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      # 리포지토리 메타 정보가 꼭 필요하면 유지 (토큰 권한만 read로도 동작하는지 확인)
       - name: Repository Meta
         uses: varunsridharan/action-repository-meta@main
         env:
@@ -98,7 +91,6 @@ jobs:
         working-directory: src
         run: |
           dotnet publish -c Release -o ../docs
-          # 앱이 SPA라면 base href 재작성
           sed -i 's%<base href="/"%<base href="/${{ github.event.repository.name }}/"%g' ../docs/wwwroot/index.html || true
           touch ../docs/wwwroot/.nojekyll
 
@@ -110,11 +102,9 @@ jobs:
   deploy_pages:
     name: Deploy to GitHub Pages
     needs: build_and_test
-    # main 브랜치로의 push만 배포 (필요시 'master'로 변경)
     if: github.event_name == 'push' && github.ref_name == 'main'
     runs-on: ubuntu-latest
 
-    # Pages 배포에 필요한 최소 권한
     permissions:
       pages: write
       id-token: write
