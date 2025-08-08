@@ -14,7 +14,17 @@
         <ul>
             @foreach (var s in Sessions)
             {
-                <li class="@(s.Id == CurrentSessionId ? "active" : null)" @onclick="() => SwitchSession(s.Id)">@s.Title</li>
+                <li class="@(s.Id == CurrentSessionId ? "active" : null)">
+                    <div class="session-item" @onclick="() => SwitchSession(s.Id)">
+                        <span class="session-title">@s.Title</span>
+                    </div>
+                    @if (Sessions.Count > 1) // 최소 1개는 남겨둠
+                    {
+                        <button class="delete-btn" @onclick="() => DeleteSession(s.Id)" @onclick:stopPropagation="true" title="대화 삭제">
+                            <i class="oi oi-trash"></i>
+                        </button>
+                    }
+                </li>
             }
         </ul>
     </aside>
@@ -28,14 +38,15 @@
                 var m = Messages[i];
                 if (m.Role != ChatRole.System) // 시스템 메시지는 표시하지 않음
                 {
-                    <div class="msg @(m.Role == ChatRole.User ? "user" : "assistant")" @onclick="() => StartEditMessage(index)">
+                    <div class="msg @(m.Role == ChatRole.User ? "user" : "assistant") @(EditingMessageIndex == index ? "editing" : "")" @onclick="() => StartEditMessage(index)">
                         @if (EditingMessageIndex == index)
                         {
                             <div class="editing-container" @onclick:stopPropagation="true">
-                                <textarea class="form-control mb-2" @bind="EditingText" rows="3"></textarea>
+                                <textarea id="edit-textarea-@index" class="form-control mb-2" @bind="EditingText" @bind:after="() => AutoResizeTextareaAsync(index)" style="min-height: 120px; resize: vertical; overflow-y: hidden;"></textarea>
                                 <div class="d-flex gap-2">
                                     <button class="btn btn-primary btn-sm" @onclick="() => SaveEditMessage(index)">저장</button>
                                     <button class="btn btn-secondary btn-sm" @onclick="CancelEditMessage">취소</button>
+                                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteMessage(index)">삭제</button>
                                 </div>
                             </div>
                         }
@@ -318,6 +329,27 @@
         Messages = s.History;
     }
 
+    async Task DeleteSession(Guid id)
+    {
+        if (Sessions.Count <= 1) return; // 최소 1개는 남겨둠
+        
+        var sessionToDelete = Sessions.FirstOrDefault(s => s.Id == id);
+        if (sessionToDelete != null)
+        {
+            Sessions.Remove(sessionToDelete);
+            
+            // 삭제된 세션이 현재 활성 세션이었다면 다른 세션으로 전환
+            if (CurrentSessionId == id)
+            {
+                var newActiveSession = Sessions.First();
+                CurrentSessionId = newActiveSession.Id;
+                Messages = newActiveSession.History;
+            }
+            
+            await SaveSessions();
+        }
+    }
+
     void UpdateCurrentSessionTitle()
     {
     var s = Sessions.First(x => x.Id == CurrentSessionId);
@@ -452,6 +484,25 @@
         
         EditingMessageIndex = index;
         EditingText = Messages[index].Text ?? string.Empty;
+        
+        // 다음 렌더링 사이클에서 자동 크기 조절 설정
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(50); // DOM 업데이트 대기
+            await JS.InvokeVoidAsync("setupAutoResize", $"edit-textarea-{index}");
+        });
+    }
+
+    async Task AutoResizeTextareaAsync(int index)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("autoResizeTextarea", $"edit-textarea-{index}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error auto-resizing textarea: {ex.Message}");
+        }
     }
 
     async Task SaveEditMessage(int index)
@@ -470,6 +521,27 @@
         EditingMessageIndex = null;
         EditingText = string.Empty;
     }
+
+    async Task DeleteMessage(int index)
+    {
+        if (Messages[index].Role == ChatRole.System) return; // 시스템 메시지는 삭제 불가
+        
+        Messages.RemoveAt(index);
+        
+        // 편집 중이었다면 편집 상태 해제
+        if (EditingMessageIndex == index)
+        {
+            EditingMessageIndex = null;
+            EditingText = string.Empty;
+        }
+        else if (EditingMessageIndex.HasValue && EditingMessageIndex.Value > index)
+        {
+            // 편집 중인 메시지가 삭제된 메시지보다 뒤에 있다면 인덱스 조정
+            EditingMessageIndex--;
+        }
+        
+        await SaveSessions();
+    }
 }
 
 <style>
@@ -477,17 +549,37 @@
 .history { border-right: 1px solid #eee; padding: .75rem; overflow: auto; }
 .history-header { display: flex; justify-content: space-between; align-items-center; margin-bottom: .5rem; }
 .history ul { list-style: none; padding: 0; margin: 0; display: grid; gap: .25rem; }
-.history li { padding: .5rem; border-radius: 6px; cursor: pointer; }
+.history li { border-radius: 6px; position: relative; }
 .history li:hover { background: #f3f4f6; }
 .history li.active { background: #e5f0ff; }
+.session-item { padding: .5rem; cursor: pointer; display: flex; align-items: center; }
+.session-title { flex-grow: 1; }
+.delete-btn { 
+    position: absolute; 
+    right: 0.5rem; 
+    top: 50%; 
+    transform: translateY(-50%); 
+    background: none; 
+    border: none; 
+    color: #dc3545; 
+    cursor: pointer; 
+    padding: 0.25rem; 
+    border-radius: 3px; 
+    opacity: 0.7; 
+    transition: opacity 0.2s; 
+    font-size: 0.8rem;
+}
+.delete-btn:hover { background: #f8d7da; opacity: 1; }
 
 .chat-main { display: grid; grid-template-rows: 1fr auto; height: 100%; }
 .chat-container { padding: 1rem; display: flex; flex-direction: column; gap: .5rem; overflow: auto; }
-.msg { padding: .6rem .8rem; border-radius: 8px; white-space: pre-wrap; cursor: pointer; transition: background-color 0.2s; }
+.msg { padding: .6rem .8rem; border-radius: 8px; white-space: pre-wrap; cursor: pointer; transition: background-color 0.2s; position: relative; }
 .msg:hover { opacity: 0.8; }
 .msg.user { background: #e9f5ff; align-self: flex-end; }
 .msg.assistant { background: #f7f7f8; align-self: flex-start; }
-.editing-container { cursor: default; }
+.msg.editing { align-self: stretch; max-width: 100%; }
+.editing-container { cursor: default; width: 100%; }
+.editing-container .form-control { width: 100%; }
 .composer { padding: .75rem; border-top: 1px solid #eee; }
 
 .input-section { }

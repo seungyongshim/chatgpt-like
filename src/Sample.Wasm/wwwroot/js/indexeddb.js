@@ -151,3 +151,24 @@ window.loadSettingFromIndexedDB = async (key) => {
         return null;
     }
 };
+
+// 텍스트 영역 자동 크기 조절 함수
+window.autoResizeTextarea = (elementId) => {
+    const element = typeof elementId === 'string' ? document.getElementById(elementId) : elementId;
+    if (element) {
+        element.style.height = 'auto';
+        element.style.height = Math.max(120, element.scrollHeight) + 'px';
+    }
+};
+
+// 텍스트 영역에 자동 크기 조절 이벤트 리스너 추가
+window.setupAutoResize = (elementId) => {
+    const element = document.getElementById(elementId);
+    if (element) {
+        const resizeHandler = () => window.autoResizeTextarea(element);
+        element.addEventListener('input', resizeHandler);
+        element.addEventListener('paste', () => setTimeout(resizeHandler, 10));
+        // 초기 크기 설정
+        setTimeout(() => window.autoResizeTextarea(element), 10);
+    }
+};
