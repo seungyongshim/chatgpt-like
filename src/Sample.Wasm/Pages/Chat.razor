@@ -1,0 +1,642 @@
+@page "/chat"
+@using Microsoft.Extensions.AI
+@using Microsoft.AspNetCore.Components.Web
+@inject Sample.Wasm.Services.IChatService ChatService
+@inject IJSRuntime JS
+@using System.Linq
+
+<div class="chat-layout">
+    <aside class="history">
+        <div class="history-header">
+            <span>대화</span>
+            <button class="btn btn-outline-primary btn-sm" @onclick="NewChat">+ 새 대화</button>
+        </div>
+        <ul>
+            @foreach (var s in Sessions)
+            {
+                <li class="@(s.Id == CurrentSessionId ? "active" : null)" @onclick="() => SwitchSession(s.Id)">@s.Title</li>
+            }
+        </ul>
+    </aside>
+
+    <main class="chat-main">
+
+        <div class="chat-container">
+            @for (int i = 0; i < Messages.Count; i++)
+            {
+                var index = i;
+                var m = Messages[i];
+                if (m.Role != ChatRole.System) // 시스템 메시지는 표시하지 않음
+                {
+                    <div class="msg @(m.Role == ChatRole.User ? "user" : "assistant")" @onclick="() => StartEditMessage(index)">
+                        @if (EditingMessageIndex == index)
+                        {
+                            <div class="editing-container" @onclick:stopPropagation="true">
+                                <textarea class="form-control mb-2" @bind="EditingText" rows="3"></textarea>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary btn-sm" @onclick="() => SaveEditMessage(index)">저장</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEditMessage">취소</button>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @m.Text
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="composer container-fluid py-2">
+            <div class="input-section d-flex flex-column gap-2">
+                <textarea @bind="UserInput" class="form-control" style="min-height: 90px" placeholder="메시지를 입력하세요" @onkeydown="HandleKeyDown"></textarea>
+                
+                <!-- Model Selection Row -->
+                <div class="model-selection-row d-flex align-items-center gap-2">
+                    <label class="model-label mb-0">모델:</label>
+                    @if (AvailableModels?.Length > 0)
+                    {
+                        <select class="form-select flex-grow-1" @bind=SelectedModel @bind:after="LoadModelSettings">
+                            @foreach (var m in AvailableModels)
+                            {
+                                <option value="@m">@m</option>
+                            }
+                        </select>
+                    }
+                    else
+                    {
+                        <input class="form-control flex-grow-1" placeholder="모델 ID 직접 입력 (예: gpt-4o-mini)" @bind=SelectedModel />
+                    }
+                </div>
+
+                <!-- Controls Row -->
+                <div class="controls-row d-flex align-items-center gap-2">
+                    <button class="btn btn-primary flex-grow-1" disabled="@(_sending || string.IsNullOrWhiteSpace(UserInput) || string.IsNullOrWhiteSpace(EffectiveModel))" @onclick="SendAsync">
+                        @if (_sending)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                            <span>전송 중...</span>
+                        }
+                        else
+                        {
+                            <span>보내기</span>
+                        }
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" @onclick="ToggleSettingsOverlay">
+                        <i class="oi oi-cog"></i>
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Error))
+                {
+                    <div class="error">@Error</div>
+                }
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Settings Overlay -->
+@if (ShowSettingsOverlay)
+{
+    <div class="settings-overlay" @onclick="CloseSettingsOverlay">
+        <div class="settings-panel" @onclick:stopPropagation="true">
+            <div class="settings-header">
+                <h5>설정</h5>
+                <button type="button" class="btn-close" @onclick="CloseSettingsOverlay">&times;</button>
+            </div>
+            <div class="settings-body">
+                <div class="mb-3">
+                    <label class="form-label">System Message</label>
+                    <textarea class="form-control" rows="3" placeholder="시스템 메시지를 입력하세요..." @bind=SystemMessage @bind:after="SaveSystemMessage"></textarea>
+                    <div class="form-text">AI의 역할과 행동을 정의합니다</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">온도</label>
+                    <input type="number" class="form-control" min="0" max="2" step="0.1" @bind=Temperature @bind:after="SaveModelSettings" />
+                    <div class="form-text">0에 가까울수록 일관된 답변, 2에 가까울수록 창의적인 답변</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">최대 토큰</label>
+                    <input type="number" class="form-control" min="1" step="1" @bind=MaxTokens @bind:after="SaveModelSettings" />
+                    <div class="form-text">비워두면 모델 기본값 사용</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">기본 모델</label>
+                    <input class="form-control" placeholder="예: gpt-4o-mini" @bind=DefaultModel />
+                    <div class="form-text">목록 로드 실패 시 사용할 기본 모델</div>
+                </div>
+
+                <div class="d-flex gap-2 align-items-center">
+                    <button class="btn btn-primary" @onclick="SaveDefaults">기본값 저장</button>
+                    <button class="btn btn-outline-primary" @onclick="TestConnection">연결 테스트</button>
+                    @if (!string.IsNullOrEmpty(SaveStatus))
+                    {
+                        <span class="text-success">@SaveStatus</span>
+                    }
+                    @if (!string.IsNullOrEmpty(ConnectionStatus))
+                    {
+                        <span class="@(ConnectionOk ? "text-success" : "text-danger")">@ConnectionStatus</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    string UserInput { get; set; } = string.Empty;
+    bool _sending;
+    string? Error;
+    List<ChatMessage> Messages { get; set; } = new()
+    {
+        new(ChatRole.System, "You are a helpful assistant.")
+    };
+    class Session { public Guid Id { get; set; } public string Title { get; set; } = string.Empty; public List<ChatMessage> History { get; set; } = new(); }
+    List<Session> Sessions { get; set; } = new();
+    Guid CurrentSessionId { get; set; }
+    string SelectedModel { get; set; } = string.Empty;
+    string[] AvailableModels = Array.Empty<string>();
+    double Temperature { get; set; } = 1.5;
+    int? MaxTokens { get; set; }
+    string EffectiveModel => string.IsNullOrWhiteSpace(SelectedModel)
+        ? (AvailableModels.Length > 0 ? AvailableModels[0] : string.Empty)
+        : SelectedModel;
+    string DefaultModel { get; set; } = string.Empty;
+    string? SaveStatus;
+    string? ConnectionStatus;
+    bool ConnectionOk;
+    bool ShowSettingsOverlay { get; set; } = false;
+    string SystemMessage { get; set; } = "You are a helpful assistant.";
+    int? EditingMessageIndex { get; set; } = null;
+    string EditingText { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load models from local copilot-api
+        try
+        {
+            AvailableModels = await ChatService.GetModelsAsync();
+            if (AvailableModels.Length > 0)
+            {
+                SelectedModel = AvailableModels[0];
+                await LoadModelSettings();
+            }
+        }
+        catch
+        {
+            // ignore; keep empty, show loading hint
+        }
+
+        if (AvailableModels.Length == 0)
+        {
+            // Restore last used model if any
+            var last = await JS.InvokeAsync<string>("localStorage.getItem", "LAST_MODEL");
+            if (!string.IsNullOrWhiteSpace(last))
+            {
+                SelectedModel = last;
+                await LoadModelSettings();
+            }
+            else
+            {
+                DefaultModel = await JS.InvokeAsync<string>("localStorage.getItem", "DEFAULT_MODEL");
+                if (!string.IsNullOrWhiteSpace(DefaultModel))
+                {
+                    SelectedModel = DefaultModel;
+                    await LoadModelSettings();
+                }
+            }
+        }
+
+        // load sessions from IndexedDB or localStorage
+        try
+        {
+            var sessionDtos = await JS.InvokeAsync<List<SessionDto>>("loadSessionsFromIndexedDB");
+            if (sessionDtos != null && sessionDtos.Count > 0)
+            {
+                Sessions = sessionDtos.Select(d => new Session { Id = d.Id, Title = d.Title, History = d.History.Select(x => new ChatMessage(ParseRole(x.Role), x.Text)).ToList() }).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading from IndexedDB: {ex.Message}");
+            // Fallback to localStorage
+            var json = await JS.InvokeAsync<string>("localStorage.getItem", "CHAT_SESSIONS");
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                try
+                {
+                    var parsed = System.Text.Json.JsonSerializer.Deserialize<List<SessionDto>>(json);
+                    if (parsed is not null)
+                    {
+                        Sessions = parsed.Select(d => new Session { Id = d.Id, Title = d.Title, History = d.History.Select(x => new ChatMessage(ParseRole(x.Role), x.Text)).ToList() }).ToList();
+                    }
+                }
+                catch { }
+            }
+        }
+        if (Sessions.Count == 0)
+        {
+            var sid = Guid.NewGuid();
+            Sessions.Add(new Session { Id = sid, Title = "새 대화", History = new(Messages) });
+        }
+        CurrentSessionId = Sessions[0].Id;
+        Messages = Sessions[0].History;
+
+        // Load system message
+        var savedSystemMessage = await JS.InvokeAsync<string>("localStorage.getItem", "SYSTEM_MESSAGE");
+        if (!string.IsNullOrWhiteSpace(savedSystemMessage))
+        {
+            SystemMessage = savedSystemMessage;
+            if (Messages.Count > 0 && Messages[0].Role == ChatRole.System)
+            {
+                Messages[0] = new ChatMessage(ChatRole.System, SystemMessage);
+            }
+        }
+    }
+
+    async Task SendAsync()
+    {
+        if (string.IsNullOrWhiteSpace(UserInput) || _sending)
+            return;
+
+        var input = UserInput.Trim();
+        UserInput = string.Empty;
+        _sending = true;
+
+        try
+        {
+            Error = null;
+            Messages.Add(new(ChatRole.User, input));
+            var model = EffectiveModel;
+            if (string.IsNullOrWhiteSpace(model))
+            {
+                Error = "모델을 선택하거나 입력하세요.";
+                return;
+            }
+            var text = await ChatService.GetResponseAsync(Messages, model, Temperature, MaxTokens);
+            Messages.Add(new(ChatRole.Assistant, text));
+            UpdateCurrentSessionTitle();
+            await SaveSessions();
+            await JS.InvokeVoidAsync("localStorage.setItem", "LAST_MODEL", model);
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+        finally
+        {
+            _sending = false;
+            StateHasChanged();
+        }
+    }
+
+    Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        // 모바일에서는 Enter가 줄바꿈, 전송은 버튼으로만
+        return Task.CompletedTask;
+    }
+
+    void NewChat()
+    {
+        var sid = Guid.NewGuid();
+        var chat = new List<ChatMessage> { new(ChatRole.System, SystemMessage) };
+        var s = new Session { Id = sid, Title = "새 대화", History = chat };
+        Sessions.Insert(0, s);
+        SwitchSession(sid);
+        _ = SaveSessions();
+    }
+
+    void SwitchSession(Guid id)
+    {
+        var s = Sessions.First(x => x.Id == id);
+        CurrentSessionId = id;
+        Messages = s.History;
+    }
+
+    void UpdateCurrentSessionTitle()
+    {
+    var s = Sessions.First(x => x.Id == CurrentSessionId);
+        var firstUser = s.History.FirstOrDefault(m => m.Role == ChatRole.User)?.Text;
+        if (!string.IsNullOrWhiteSpace(firstUser))
+        {
+            s.Title = firstUser.Length > 20 ? firstUser.Substring(0, 20) + "…" : firstUser;
+        }
+    }
+
+    async Task SaveSessions()
+    {
+        var dtos = Sessions.Select(s => new SessionDto
+        {
+            Id = s.Id,
+            Title = s.Title,
+            History = s.History.Select(m => new MessageDto { Role = RoleToString(m.Role), Text = m.Text ?? string.Empty }).ToList()
+        }).ToList();
+        
+        // IndexedDB에 저장
+        try
+        {
+            await JS.InvokeVoidAsync("saveSessionsToIndexedDB", dtos);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving to IndexedDB: {ex.Message}");
+            // Fallback to localStorage
+            var json = System.Text.Json.JsonSerializer.Serialize(dtos);
+            await JS.InvokeVoidAsync("localStorage.setItem", "CHAT_SESSIONS", json);
+        }
+    }
+
+    class SessionDto { public Guid Id { get; set; } public string Title { get; set; } = ""; public List<MessageDto> History { get; set; } = new(); }
+    class MessageDto { public string Role { get; set; } = "user"; public string Text { get; set; } = ""; }
+
+    static string RoleToString(ChatRole role)
+        => role == ChatRole.User ? "user" : role == ChatRole.System ? "system" : "assistant";
+
+    static ChatRole ParseRole(string role)
+        => role == "user" ? ChatRole.User : role == "system" ? ChatRole.System : ChatRole.Assistant;
+
+    async Task LoadModelSettings()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedModel)) return;
+        var key = $"MODEL_SETTINGS::{SelectedModel}";
+        var json = await JS.InvokeAsync<string>("localStorage.getItem", key);
+        if (!string.IsNullOrWhiteSpace(json))
+        {
+            try
+            {
+                var cfg = System.Text.Json.JsonSerializer.Deserialize<ModelSettings>(json);
+                if (cfg is not null)
+                {
+                    Temperature = cfg.Temperature ?? 1.5;
+                    MaxTokens = cfg.MaxTokens;
+                }
+            }
+            catch { }
+        }
+        else
+        {
+            Temperature = 1.5;
+            MaxTokens = null;
+        }
+        StateHasChanged();
+    }
+
+    async Task SaveModelSettings()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedModel)) return;
+        var key = $"MODEL_SETTINGS::{SelectedModel}";
+        var cfg = new ModelSettings { Temperature = Temperature, MaxTokens = MaxTokens };
+        var json = System.Text.Json.JsonSerializer.Serialize(cfg);
+        await JS.InvokeVoidAsync("localStorage.setItem", key, json);
+    }
+
+    class ModelSettings
+    {
+        public double? Temperature { get; set; }
+        public int? MaxTokens { get; set; }
+    }
+
+    async Task SaveDefaults()
+    {
+        await JS.InvokeVoidAsync("localStorage.setItem", "DEFAULT_MODEL", DefaultModel ?? string.Empty);
+        SaveStatus = "저장됨";
+        await Task.Delay(1000);
+        SaveStatus = null;
+    }
+
+    async Task TestConnection()
+    {
+        try
+        {
+            var models = await ChatService.GetModelsAsync();
+            ConnectionOk = models.Length >= 0; // 호출이 성공하면 OK로 간주
+            ConnectionStatus = ConnectionOk ? "copilot-api 연결 성공" : "모델 목록이 비어있습니다";
+        }
+        catch (Exception ex)
+        {
+            ConnectionOk = false;
+            ConnectionStatus = $"연결 실패: {ex.Message}";
+        }
+        StateHasChanged();
+    }
+
+    void ToggleSettingsOverlay()
+    {
+        ShowSettingsOverlay = !ShowSettingsOverlay;
+    }
+
+    void CloseSettingsOverlay()
+    {
+        ShowSettingsOverlay = false;
+    }
+
+    async Task SaveSystemMessage()
+    {
+        await JS.InvokeVoidAsync("localStorage.setItem", "SYSTEM_MESSAGE", SystemMessage ?? string.Empty);
+        // 현재 세션의 첫 번째 메시지(시스템 메시지) 업데이트
+        if (Messages.Count > 0 && Messages[0].Role == ChatRole.System)
+        {
+            Messages[0] = new ChatMessage(ChatRole.System, SystemMessage);
+        }
+        await SaveSessions();
+    }
+
+    void StartEditMessage(int index)
+    {
+        if (Messages[index].Role == ChatRole.System) return; // 시스템 메시지는 편집 불가
+        
+        EditingMessageIndex = index;
+        EditingText = Messages[index].Text ?? string.Empty;
+    }
+
+    async Task SaveEditMessage(int index)
+    {
+        if (EditingMessageIndex == index)
+        {
+            Messages[index] = new ChatMessage(Messages[index].Role, EditingText);
+            EditingMessageIndex = null;
+            EditingText = string.Empty;
+            await SaveSessions();
+        }
+    }
+
+    void CancelEditMessage()
+    {
+        EditingMessageIndex = null;
+        EditingText = string.Empty;
+    }
+}
+
+<style>
+.chat-layout { display: grid; grid-template-columns: 260px 1fr; height: 100vh; }
+.history { border-right: 1px solid #eee; padding: .75rem; overflow: auto; }
+.history-header { display: flex; justify-content: space-between; align-items-center; margin-bottom: .5rem; }
+.history ul { list-style: none; padding: 0; margin: 0; display: grid; gap: .25rem; }
+.history li { padding: .5rem; border-radius: 6px; cursor: pointer; }
+.history li:hover { background: #f3f4f6; }
+.history li.active { background: #e5f0ff; }
+
+.chat-main { display: grid; grid-template-rows: 1fr auto; height: 100%; }
+.chat-container { padding: 1rem; display: flex; flex-direction: column; gap: .5rem; overflow: auto; }
+.msg { padding: .6rem .8rem; border-radius: 8px; white-space: pre-wrap; cursor: pointer; transition: background-color 0.2s; }
+.msg:hover { opacity: 0.8; }
+.msg.user { background: #e9f5ff; align-self: flex-end; }
+.msg.assistant { background: #f7f7f8; align-self: flex-start; }
+.editing-container { cursor: default; }
+.composer { padding: .75rem; border-top: 1px solid #eee; }
+
+.input-section { }
+.model-selection-row { }
+.controls-row { }
+.model-label { font-weight: 500; color: #6c757d; min-width: 50px; }
+
+.hint { color: #888; font-size: .85rem; margin-top: .25rem; }
+.error { color: #a00; margin-top: .5rem; }
+
+/* Settings Overlay */
+.settings-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+}
+
+.settings-panel {
+    background: white;
+    border-radius: 8px;
+    padding: 0;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.settings-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-close:hover {
+    color: #000;
+}
+
+.settings-body {
+    padding: 1.5rem;
+}
+
+@@media (max-width: 768px) {
+  .chat-layout { 
+    grid-template-columns: 1fr; 
+    height: 100vh;
+  }
+  .history { 
+    display: none; 
+  }
+  
+  .chat-main {
+    height: 100vh;
+  }
+  
+  .composer {
+    padding: 1rem;
+  }
+  
+  .model-selection-row {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  
+  .model-label {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+  
+  .controls-row {
+    flex-wrap: nowrap;
+  }
+  
+  .controls-row .btn {
+    white-space: nowrap;
+  }
+  
+  .controls-row .btn-outline-secondary {
+    flex-shrink: 0;
+    padding: 0.375rem 0.75rem;
+  }
+  
+  .settings-panel {
+    width: 95%;
+    margin: 1rem;
+    max-height: 90vh;
+  }
+  
+  .settings-header {
+    padding: 1rem;
+  }
+  
+  .settings-body {
+    padding: 1rem;
+  }
+}
+
+@@media (max-width: 480px) {
+  .composer {
+    padding: 0.75rem;
+  }
+  
+  .model-label {
+    font-size: 0.85rem;
+  }
+  
+  .form-control, .form-select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .controls-row .btn {
+    font-size: 0.9rem;
+  }
+  
+  .controls-row .btn-outline-secondary {
+    padding: 0.375rem 0.5rem;
+  }
+  
+  .controls-row .btn-outline-secondary i {
+    font-size: 1rem;
+  }
+}
+</style>
