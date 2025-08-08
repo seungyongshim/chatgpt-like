@@ -41,20 +41,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Add test packages (if missing)
-        working-directory: src
-        run: |
-          set -e
-          # Only add test packages if test projects exist
-          if dotnet sln list | grep -q Tests; then
-            for proj in $(dotnet sln list | grep Tests); do
-              dotnet add "$proj" package JunitXml.TestLogger || true
-              dotnet add "$proj" package altcover || true
-            done
-          else
-            echo "No test projects found"
-          fi
-
       - name: Restore & Build
         working-directory: src
         run: |
@@ -65,28 +51,15 @@ jobs:
       - name: Publish (dotnet)
         working-directory: src
         run: |
-          # 1) 빌드를 임시 폴더에 출력
-          dotnet publish -c Release -o ../publish
-
-          SITE_DIR="../publish/wwwroot"
-
+          dotnet publish -c Release -o ../docs
           # Fix base href for GitHub Pages
-          if [ -f ../publish/wwwroot/index.html ]; then
-            sed -i 's%<base href="/"%<base href="/${{ github.event.repository.name }}/"%g' ../docs/index.html || true
+          if [ -f ../docs/wwwroot/index.html ]; then
+            sed -i 's%<base href="/"%<base href="/${{ github.event.repository.name }}/"%g' ../docs/wwwroot/index.html || true
           fi
-
-          # 3) /docs 루트 정리 후 wwwroot 내용만 복사/이동
-          rm -rf ../docs
-          mkdir -p ../docs
-          cp -R "$SITE_DIR"/. ../docs/
-
-          # 4) GitHub Pages용 설정들
-          touch ../docs/.nojekyll
-          # SPA 라우팅(선택)
-          [ -f ../docs/index.html ] && cp ../docs/index.html ../docs/404.html
-
-          # 5) 최종 산출물 확인
-          ls -la ../docs
+          # Create .nojekyll file to disable Jekyll processing
+          touch ../docs/wwwroot/.nojekyll
+          # Ensure the directory exists and has content
+          ls -la ../docs/wwwroot/
 
       - name: Upload site artifact (for Pages)
         uses: actions/upload-pages-artifact@v3
