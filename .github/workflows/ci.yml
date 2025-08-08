@@ -52,11 +52,7 @@ jobs:
         working-directory: src
         run: |
           dotnet publish -c Release -o ../docs
-          # Fix base href for GitHub Pages
-          if [ -f ../docs/wwwroot/index.html ]; then
-            sed -i 's%<base href="/"%<base href="/${{ github.event.repository.name }}/"%g' ../docs/wwwroot/index.html || true
-          fi
-          # Create .nojekyll file to disable Jekyll processing
+          sed -i 's%<base href="/"%<base href="/${{ github.event.repository.name }}/"%g' ../docs/wwwroot/index.html || true
           touch ../docs/wwwroot/.nojekyll
           # Ensure the directory exists and has content
           ls -la ../docs/wwwroot/
