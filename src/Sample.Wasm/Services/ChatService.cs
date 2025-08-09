@@ -14,6 +14,17 @@ public interface IChatService
 {
     public Task<string[]> GetModelsAsync(CancellationToken ct = default);
     public Task<string> GetResponseAsync(IList<ChatMessage> history, string model, double? temperature = null, int? maxTokens = null, CancellationToken ct = default);
+    public Task<UsageInfo> GetUsageAsync(CancellationToken ct = default);
+}
+
+public class UsageInfo
+{
+    public int? PremiumRequestsLeft { get; set; }
+    public int? TotalPremiumRequests { get; set; }
+    public int? PremiumRequestsUsed => 
+        (this.TotalPremiumRequests.HasValue && this.PremiumRequestsLeft.HasValue) 
+            ? this.TotalPremiumRequests.Value - this.PremiumRequestsLeft.Value 
+            : null;
 }
 
 public class ChatService : IChatService
@@ -104,5 +115,44 @@ public class ChatService : IChatService
         var root = doc.RootElement;
         var content = root.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
         return content ?? string.Empty;
+    }
+
+    public async Task<UsageInfo> GetUsageAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            // GET http://localhost:4141/usage
+            using var req = new HttpRequestMessage(HttpMethod.Get, new Uri(BaseUri, "/usage"));
+            using var res = await this.httpClient.SendAsync(req, ct);
+            res.EnsureSuccessStatusCode();
+            using var doc = await JsonDocument.ParseAsync(await res.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
+            var root = doc.RootElement;
+
+            var usageInfo = new UsageInfo();
+            
+            // quota_snapshots.premium_interactions 구조에서 정보 추출
+            if (root.TryGetProperty("quota_snapshots", out var quotaSnapshotsEl) &&
+                quotaSnapshotsEl.TryGetProperty("premium_interactions", out var premiumEl))
+            {
+                if (premiumEl.TryGetProperty("remaining", out var remainingEl) &&
+                    remainingEl.ValueKind == JsonValueKind.Number)
+                {
+                    usageInfo.PremiumRequestsLeft = remainingEl.GetInt32();
+                }
+                
+                if (premiumEl.TryGetProperty("entitlement", out var entitlementEl) &&
+                    entitlementEl.ValueKind == JsonValueKind.Number)
+                {
+                    usageInfo.TotalPremiumRequests = entitlementEl.GetInt32();
+                }
+            }
+
+            return usageInfo;
+        }
+        catch (Exception)
+        {
+            // 오류 발생 시 null 값들을 가진 UsageInfo 반환
+            return new UsageInfo();
+        }
     }
 }

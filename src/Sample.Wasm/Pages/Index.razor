@@ -161,6 +161,83 @@
                     </button>
                 </div>
 
+                <!-- Usage Info Row -->
+                <div class="usage-info-row">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="usage-info flex-grow-1">
+                            @if (LoadingUsage)
+                            {
+                                <div class="d-flex align-items-center">
+                                    <span class="text-muted small">
+                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        사용량 로딩 중...
+                                    </span>
+                                </div>
+                            }
+                            else if (CurrentUsage?.PremiumRequestsUsed.HasValue == true && CurrentUsage?.TotalPremiumRequests.HasValue == true)
+                            {
+                                var used = CurrentUsage.PremiumRequestsUsed.Value;
+                                var total = CurrentUsage.TotalPremiumRequests.Value;
+                                var percentage = total > 0 ? (used * 100.0 / total) : 0;
+                                string colorClass;
+                                string progressClass;
+                                if (percentage < 50)
+                                {
+                                    colorClass = "text-success";
+                                    progressClass = "bg-success";
+                                }
+                                else if (percentage < 80)
+                                {
+                                    colorClass = "text-warning";
+                                    progressClass = "bg-warning";
+                                }
+                                else
+                                {
+                                    colorClass = "text-danger";
+                                    progressClass = "bg-danger";
+                                }
+                                
+                                <div class="usage-display d-flex align-items-center gap-3">
+                                    <div class="usage-text-info">
+                                        <span class="@colorClass small">
+                                            <i class="oi oi-pulse me-1"></i>
+                                            <strong>@used</strong> / @total 
+                                            <span class="usage-percentage ms-1">(@percentage.ToString("F1")%)</span>
+                                        </span>
+                                        <div class="usage-label text-muted" style="font-size: 0.7rem;">Premium 사용량</div>
+                                    </div>
+                                    
+                                    <div class="usage-progress-inline flex-grow-1">
+                                        <div class="progress">
+                                            <div class="progress-bar @progressClass" 
+                                                 role="progressbar" 
+                                                 style="width: @percentage.ToString("F1")%" 
+                                                 aria-valuenow="@used" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="@total">
+                                            </div>
+                                        </div>
+                                        <div class="progress-labels">
+                                            <span>0</span>
+                                            <span>@total</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else if (CurrentUsage != null)
+                            {
+                                <span class="text-muted small">
+                                    <i class="oi oi-info me-1"></i>
+                                    사용량 정보를 가져올 수 없습니다
+                                </span>
+                            }
+                        </div>
+                        <button class="btn btn-link btn-sm p-1 text-muted usage-refresh-btn" @onclick="LoadUsageAsync" title="사용량 새로고침" disabled="@LoadingUsage">
+                            <i class="oi oi-reload @(LoadingUsage ? "spinning" : "")" style="font-size: 0.9rem;"></i>
+                        </button>
+                    </div>
+                </div>
+
                 @if (!string.IsNullOrEmpty(Error))
                 {
                     <div class="error">@Error</div>
@@ -250,6 +327,8 @@
     int? EditingMessageIndex { get; set; } = null;
     string EditingText { get; set; } = string.Empty;
     bool ShowMobileHistory { get; set; } = false;
+    Sample.Wasm.Services.UsageInfo? CurrentUsage { get; set; } = null;
+    bool LoadingUsage { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -349,6 +428,30 @@
                 Messages[0] = new ChatMessage(ChatRole.System, SystemMessage);
             }
         }
+
+        // Load initial usage info
+        await LoadUsageAsync();
+    }
+
+    async Task LoadUsageAsync()
+    {
+        if (LoadingUsage) return;
+        
+        try
+        {
+            LoadingUsage = true;
+            CurrentUsage = await ChatService.GetUsageAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load usage info: {ex.Message}");
+            CurrentUsage = null;
+        }
+        finally
+        {
+            LoadingUsage = false;
+            StateHasChanged();
+        }
     }
 
     async Task SendAsync()
@@ -375,6 +478,9 @@
             UpdateCurrentSessionTitle();
             await SaveSessions();
             await JS.InvokeVoidAsync("localStorage.setItem", "LAST_MODEL", model);
+            
+            // Update usage info after sending message
+            _ = LoadUsageAsync(); // Fire and forget to not block UI
         }
         catch (Exception ex)
         {
@@ -781,6 +887,9 @@
             Messages.Add(new(ChatRole.Assistant, text));
             UpdateCurrentSessionTitle();
             await SaveSessions();
+            
+            // Update usage info after resending message
+            _ = LoadUsageAsync(); // Fire and forget to not block UI
         }
         catch (Exception ex)
         {
@@ -926,6 +1035,100 @@
 .input-section { }
 .model-selection-row { }
 .controls-row { }
+.usage-info-row { 
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    margin-top: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.usage-info {
+    flex-grow: 1;
+}
+.usage-display {
+    align-items: center;
+    gap: 1rem;
+}
+.usage-text-info {
+    min-width: 120px;
+    flex-shrink: 0;
+}
+.usage-info .oi-pulse {
+    color: #007bff;
+    font-size: 1rem;
+}
+.usage-info .oi-info {
+    color: #6c757d;
+}
+.usage-percentage {
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.usage-label {
+    margin-top: 2px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+.usage-progress-inline {
+    max-width: 200px;
+    min-width: 150px;
+}
+.usage-progress-inline .progress {
+    height: 6px;
+    background-color: rgba(0,0,0,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+.usage-progress-inline .progress-bar {
+    transition: width 0.6s ease;
+    border-radius: 3px;
+    background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem;
+    animation: progress-bar-stripes 1s linear infinite;
+}
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    font-size: 0.65rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+.usage-refresh-btn {
+    transition: all 0.25s ease;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.usage-refresh-btn:hover {
+    color: #007bff !important;
+    background-color: rgba(0,123,255,0.1);
+    transform: scale(1.1);
+}
+.usage-refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+.usage-refresh-btn:disabled:hover {
+    background-color: transparent;
+}
+.spinning {
+    animation: spin 1s linear infinite;
+}
+@@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+@@keyframes progress-bar-stripes {
+    from { background-position: 1rem 0; }
+    to { background-position: 0 0; }
+}
 .model-label { font-weight: 500; color: #6c757d; min-width: 50px; }
 
 .hint { color: #888; font-size: .85rem; margin-top: .25rem; }
@@ -1078,6 +1281,28 @@
   
   .settings-body {
     padding: 1rem;
+  }
+
+  /* 모바일에서 usage 정보 최적화 */
+  .usage-display {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .usage-text-info {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .usage-progress-inline {
+    max-width: none;
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .usage-info-row {
+    padding: 0.5rem;
   }
 }
 
