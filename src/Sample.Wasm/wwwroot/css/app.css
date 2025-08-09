@@ -1,5 +1,75 @@
 ﻿@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
 
+:root {
+    /* Light theme colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-muted: #888;
+    --border-color: #dee2e6;
+    --border-light: #eee;
+    --shadow: 0 2px 4px rgba(0,0,0,0.05);
+    --overlay-bg: rgba(0, 0, 0, 0.5);
+    
+    /* Message colors */
+    --msg-user-bg: #e9f5ff;
+    --msg-assistant-bg: #f7f7f8;
+    --msg-system-bg: #fff3e0;
+    --msg-system-border: #ffcc80;
+    --system-badge-bg: #ff9800;
+    
+    /* Usage info colors */
+    --usage-bg: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    --usage-border: #dee2e6;
+    --usage-text: #6c757d;
+    
+    /* Button colors */
+    --btn-primary-bg: #1b6ec2;
+    --btn-primary-border: #1861ac;
+    --link-color: #0077cc;
+    
+    /* Error colors */
+    --error-color: #a00;
+    --error-ui-bg: lightyellow;
+}
+
+[data-theme="dark"] {
+    /* Dark theme colors */
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #404040;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --text-muted: #888;
+    --border-color: #404040;
+    --border-light: #333;
+    --shadow: 0 2px 4px rgba(0,0,0,0.3);
+    --overlay-bg: rgba(0, 0, 0, 0.8);
+    
+    /* Message colors - dark theme */
+    --msg-user-bg: #2c5aa0;
+    --msg-assistant-bg: #333333;
+    --msg-system-bg: #4a3728;
+    --msg-system-border: #8b5a2b;
+    --system-badge-bg: #e67e22;
+    
+    /* Usage info colors - dark theme */
+    --usage-bg: linear-gradient(135deg, #2d2d2d 0%, #404040 100%);
+    --usage-border: #555;
+    --usage-text: #b0b0b0;
+    
+    /* Button colors - dark theme */
+    --btn-primary-bg: #4dabf7;
+    --btn-primary-border: #339af0;
+    --link-color: #74c0fc;
+    
+    /* Error colors - dark theme */
+    --error-color: #ff6b6b;
+    --error-ui-bg: #5c2e04;
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     height: 100%;
@@ -8,6 +78,9 @@ html, body {
     padding: 0;
     /* 기본 스크롤 허용 */
     overflow: auto;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1:focus {
@@ -15,13 +88,13 @@ h1:focus {
 }
 
 a, .btn-link {
-    color: #0077cc;
+    color: var(--link-color);
 }
 
 .btn-primary {
     color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    background-color: var(--btn-primary-bg);
+    border-color: var(--btn-primary-border);
 }
 
 .content {
@@ -40,8 +113,50 @@ a, .btn-link {
     color: red;
 }
 
+/* Dark mode toggle button styles */
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+}
+
+.theme-toggle:hover {
+    background: var(--bg-tertiary);
+    transform: scale(1.1);
+}
+
+.theme-toggle i {
+    font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+    .theme-toggle {
+        top: 70px; /* 모바일 헤더 아래 배치 */
+        right: 1rem;
+        width: 36px;
+        height: 36px;
+    }
+    
+    .theme-toggle i {
+        font-size: 1rem;
+    }
+}
+
 #blazor-error-ui {
-    background: lightyellow;
+    background: var(--error-ui-bg);
     bottom: 0;
     box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
     display: none;
@@ -50,6 +165,7 @@ a, .btn-link {
     position: fixed;
     width: 100%;
     z-index: 1000;
+    color: var(--text-primary);
 }
 
     #blazor-error-ui .dismiss {
