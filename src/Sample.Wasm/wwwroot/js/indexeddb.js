@@ -4,23 +4,37 @@ class ChatStorage {
         this.dbName = 'ChatAppDB';
         this.version = 1;
         this.db = null;
+        this.isInitialized = false;
     }
 
     async init() {
+        if (this.isInitialized && this.db) {
+            return this.db;
+        }
+
         return new Promise((resolve, reject) => {
+            console.log('Initializing IndexedDB...');
             const request = indexedDB.open(this.dbName, this.version);
             
-            request.onerror = () => reject(request.error);
+            request.onerror = () => {
+                console.error('IndexedDB open error:', request.error);
+                reject(request.error);
+            };
+            
             request.onsuccess = () => {
+                console.log('IndexedDB opened successfully');
                 this.db = request.result;
+                this.isInitialized = true;
                 resolve(this.db);
             };
             
             request.onupgradeneeded = (event) => {
+                console.log('IndexedDB upgrade needed, creating object stores...');
                 const db = event.target.result;
                 
                 // 세션 스토어 생성
                 if (!db.objectStoreNames.contains('sessions')) {
+                    console.log('Creating sessions object store...');
                     const sessionStore = db.createObjectStore('sessions', { keyPath: 'id' });
                     sessionStore.createIndex('title', 'title', { unique: false });
                     sessionStore.createIndex('createdAt', 'createdAt', { unique: false });
@@ -28,8 +42,11 @@ class ChatStorage {
                 
                 // 설정 스토어 생성
                 if (!db.objectStoreNames.contains('settings')) {
+                    console.log('Creating settings object store...');
                     db.createObjectStore('settings', { keyPath: 'key' });
                 }
+                
+                console.log('IndexedDB upgrade completed');
             };
         });
     }
@@ -41,21 +58,45 @@ class ChatStorage {
         const store = transaction.objectStore('sessions');
         
         // 기존 세션들 삭제
-        await store.clear();
+        await new Promise((resolve, reject) => {
+            const clearRequest = store.clear();
+            clearRequest.onsuccess = () => resolve();
+            clearRequest.onerror = () => reject(clearRequest.error);
+        });
         
         // 새 세션들 저장
         for (const session of sessions) {
-            await store.add({
-                id: session.Id,
-                title: session.Title,
-                history: session.History,
+            // C#의 대문자 속성명을 JavaScript 소문자로 변환
+            const sessionData = {
+                id: session.Id || session.id,
+                title: session.Title || session.title,
+                history: session.History || session.history,
                 createdAt: new Date().toISOString()
+            };
+            console.log('Saving session to IndexedDB:', sessionData);
+            
+            // 유효성 검사
+            if (!sessionData.id) {
+                console.error('Invalid session data: missing id', session);
+                throw new Error('Session must have a valid id');
+            }
+            
+            await new Promise((resolve, reject) => {
+                const request = store.add(sessionData);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
             });
         }
         
         return new Promise((resolve, reject) => {
-            transaction.oncomplete = () => resolve();
-            transaction.onerror = () => reject(transaction.error);
+            transaction.oncomplete = () => {
+                console.log('Sessions saved to IndexedDB successfully');
+                resolve();
+            };
+            transaction.onerror = () => {
+                console.error('Error saving sessions to IndexedDB:', transaction.error);
+                reject(transaction.error);
+            };
         });
     }
 
@@ -73,9 +114,13 @@ class ChatStorage {
                     Title: session.title,
                     History: session.history
                 }));
+                console.log('Loaded sessions from IndexedDB:', sessions);
                 resolve(sessions);
             };
-            request.onerror = () => reject(request.error);
+            request.onerror = () => {
+                console.error('Error loading sessions from IndexedDB:', request.error);
+                reject(request.error);
+            };
         });
     }
 
@@ -113,23 +158,40 @@ class ChatStorage {
 // 전역 인스턴스 생성
 window.chatStorage = new ChatStorage();
 
+// 초기화 함수
+window.initializeIndexedDB = async () => {
+    try {
+        await window.chatStorage.init();
+        console.log('IndexedDB initialized successfully');
+        return true;
+    } catch (error) {
+        console.error('Failed to initialize IndexedDB:', error);
+        return false;
+    }
+};
+
 // .NET에서 호출할 수 있는 함수들
 window.saveSessionsToIndexedDB = async (sessions) => {
     try {
-        await window.chatStorage.saveSessions(sessions);
+        console.log('saveSessionsToIndexedDB called with:', sessions);
+        const result = await window.chatStorage.saveSessions(sessions);
+        console.log('saveSessionsToIndexedDB result:', result);
         return true;
     } catch (error) {
         console.error('Error saving sessions to IndexedDB:', error);
-        return false;
+        throw error; // Re-throw to let .NET handle the fallback
     }
 };
 
 window.loadSessionsFromIndexedDB = async () => {
     try {
-        return await window.chatStorage.loadSessions();
+        console.log('loadSessionsFromIndexedDB called');
+        const sessions = await window.chatStorage.loadSessions();
+        console.log('loadSessionsFromIndexedDB result:', sessions);
+        return sessions;
     } catch (error) {
         console.error('Error loading sessions from IndexedDB:', error);
-        return [];
+        throw error; // Re-throw to let .NET handle the fallback
     }
 };
 
@@ -201,6 +263,65 @@ window.copyToClipboard = async (text) => {
         }
     } catch (err) {
         console.error('Failed to copy text: ', err);
+        return false;
+    }
+};
+
+// IndexedDB 테스트 함수
+window.testIndexedDB = async () => {
+    try {
+        console.log('Testing IndexedDB...');
+        
+        // 먼저 초기화 확인
+        if (!window.chatStorage.isInitialized) {
+            console.log('IndexedDB not initialized, initializing now...');
+            await window.chatStorage.init();
+        }
+        
+        // 테스트 세션 생성 (C# 속성명 사용)
+        const testSessions = [{
+            Id: '12345678-1234-1234-1234-123456789abc',
+            Title: 'Test Session',
+            History: [
+                { Role: 'system', Text: 'You are a helpful assistant.' },
+                { Role: 'user', Text: 'Hello' },
+                { Role: 'assistant', Text: 'Hi there!' }
+            ]
+        }];
+        
+        console.log('Saving test sessions...');
+        await window.saveSessionsToIndexedDB(testSessions);
+        
+        console.log('Loading test sessions...');
+        const loaded = await window.loadSessionsFromIndexedDB();
+        
+        console.log('Test completed. Loaded sessions:', loaded);
+        return loaded.length > 0;
+    } catch (error) {
+        console.error('IndexedDB test failed:', error);
+        return false;
+    }
+};
+
+// 디버그용 함수 - IndexedDB 데이터 모두 삭제
+window.clearIndexedDB = async () => {
+    try {
+        if (!window.chatStorage.isInitialized) {
+            await window.chatStorage.init();
+        }
+        
+        const transaction = window.chatStorage.db.transaction(['sessions'], 'readwrite');
+        const store = transaction.objectStore('sessions');
+        await new Promise((resolve, reject) => {
+            const request = store.clear();
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+        
+        console.log('IndexedDB cleared successfully');
+        return true;
+    } catch (error) {
+        console.error('Error clearing IndexedDB:', error);
         return false;
     }
 };

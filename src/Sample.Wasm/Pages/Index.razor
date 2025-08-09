@@ -1,6 +1,8 @@
 ﻿@page "/"
 @using Microsoft.Extensions.AI
 @using Microsoft.AspNetCore.Components.Web
+@using System.Text.Json.Serialization
+@using System.Text.Json
 @inject Sample.Wasm.Services.IChatService ChatService
 @inject IJSRuntime JS
 @using System.Linq
@@ -202,9 +204,11 @@
                     <div class="form-text">목록 로드 실패 시 사용할 기본 모델</div>
                 </div>
 
-                <div class="d-flex gap-2 align-items-center">
+                <div class="d-flex gap-2 align-items-center flex-wrap">
                     <button class="btn btn-primary" @onclick="SaveDefaults">기본값 저장</button>
                     <button class="btn btn-outline-primary" @onclick="TestConnection">연결 테스트</button>
+                    <button class="btn btn-outline-info" @onclick="TestIndexedDB">IndexedDB 테스트</button>
+                    <button class="btn btn-outline-danger btn-sm" @onclick="ClearIndexedDB">DB 초기화</button>
                     @if (!string.IsNullOrEmpty(SaveStatus))
                     {
                         <span class="text-success">@SaveStatus</span>
@@ -249,6 +253,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Initialize IndexedDB first
+        try
+        {
+            Console.WriteLine("Initializing IndexedDB...");
+            var indexedDbInitialized = await JS.InvokeAsync<bool>("initializeIndexedDB");
+            Console.WriteLine($"IndexedDB initialization result: {indexedDbInitialized}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing IndexedDB: {ex.Message}");
+        }
+
         // Load models from local copilot-api
         try
         {
@@ -287,10 +303,13 @@
         // load sessions from IndexedDB or localStorage
         try
         {
+            Console.WriteLine("Attempting to load sessions from IndexedDB...");
             var sessionDtos = await JS.InvokeAsync<List<SessionDto>>("loadSessionsFromIndexedDB");
+            Console.WriteLine($"Loaded {sessionDtos?.Count ?? 0} sessions from IndexedDB");
             if (sessionDtos != null && sessionDtos.Count > 0)
             {
                 Sessions = sessionDtos.Select(d => new Session { Id = d.Id, Title = d.Title, History = d.History.Select(x => new ChatMessage(ParseRole(x.Role), x.Text)).ToList() }).ToList();
+                Console.WriteLine($"Converted to {Sessions.Count} sessions");
             }
         }
         catch (Exception ex)
@@ -306,6 +325,7 @@
                     if (parsed is not null)
                     {
                         Sessions = parsed.Select(d => new Session { Id = d.Id, Title = d.Title, History = d.History.Select(x => new ChatMessage(ParseRole(x.Role), x.Text)).ToList() }).ToList();
+                        Console.WriteLine($"Loaded {Sessions.Count} sessions from localStorage fallback");
                     }
                 }
                 catch { }
@@ -430,10 +450,13 @@
             History = s.History.Select(m => new MessageDto { Role = RoleToString(m.Role), Text = m.Text ?? string.Empty }).ToList()
         }).ToList();
         
+        Console.WriteLine($"Attempting to save {dtos.Count} sessions to IndexedDB...");
+        
         // IndexedDB에 저장
         try
         {
             await JS.InvokeVoidAsync("saveSessionsToIndexedDB", dtos);
+            Console.WriteLine("Sessions saved to IndexedDB successfully");
         }
         catch (Exception ex)
         {
@@ -441,11 +464,22 @@
             // Fallback to localStorage
             var json = System.Text.Json.JsonSerializer.Serialize(dtos);
             await JS.InvokeVoidAsync("localStorage.setItem", "CHAT_SESSIONS", json);
+            Console.WriteLine("Sessions saved to localStorage as fallback");
         }
     }
 
-    class SessionDto { public Guid Id { get; set; } public string Title { get; set; } = ""; public List<MessageDto> History { get; set; } = new(); }
-    class MessageDto { public string Role { get; set; } = "user"; public string Text { get; set; } = ""; }
+    class SessionDto 
+    { 
+        public Guid Id { get; set; } 
+        public string Title { get; set; } = ""; 
+        public List<MessageDto> History { get; set; } = new(); 
+    }
+    
+    class MessageDto 
+    { 
+        public string Role { get; set; } = "user"; 
+        public string Text { get; set; } = ""; 
+    }
 
     static string RoleToString(ChatRole role)
         => role == ChatRole.User ? "user" : role == ChatRole.System ? "system" : "assistant";
@@ -514,6 +548,49 @@
         {
             ConnectionOk = false;
             ConnectionStatus = $"연결 실패: {ex.Message}";
+        }
+        StateHasChanged();
+    }
+
+    async Task TestIndexedDB()
+    {
+        try
+        {
+            var result = await JS.InvokeAsync<bool>("testIndexedDB");
+            ConnectionStatus = result ? "IndexedDB 테스트 성공" : "IndexedDB 테스트 실패";
+            ConnectionOk = result;
+        }
+        catch (Exception ex)
+        {
+            ConnectionStatus = $"IndexedDB 테스트 실패: {ex.Message}";
+            ConnectionOk = false;
+        }
+        StateHasChanged();
+    }
+
+    async Task ClearIndexedDB()
+    {
+        try
+        {
+            var result = await JS.InvokeAsync<bool>("clearIndexedDB");
+            ConnectionStatus = result ? "IndexedDB 초기화 완료" : "IndexedDB 초기화 실패";
+            ConnectionOk = result;
+            
+            if (result)
+            {
+                // 현재 세션도 리셋
+                Sessions.Clear();
+                var sid = Guid.NewGuid();
+                Sessions.Add(new Session { Id = sid, Title = "새 대화", History = new(new List<ChatMessage> { new(ChatRole.System, SystemMessage) }) });
+                CurrentSessionId = Sessions[0].Id;
+                Messages = Sessions[0].History;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            ConnectionStatus = $"IndexedDB 초기화 실패: {ex.Message}";
+            ConnectionOk = false;
         }
         StateHasChanged();
     }
