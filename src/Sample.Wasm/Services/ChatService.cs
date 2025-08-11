@@ -122,9 +122,9 @@ public class ChatService : IChatService
         req.Headers.Add("anthropic_beta", "output-128k-2025-02-19");
         req.Options.Set(new HttpRequestOptionsKey<bool>("WebAssemblyEnableStreamingResponse"), true);
 
-        // 채팅 응답은 3분 타임아웃으로 설정 (AI 응답이 오래 걸릴 수 있음)
+        // 채팅 응답은 30분 타임아웃으로 설정 (AI 응답이 오래 걸릴 수 있음)
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        timeoutCts.CancelAfter(TimeSpan.FromMinutes(3));
+        timeoutCts.CancelAfter(TimeSpan.FromMinutes(30));
 
         using var res = await this.httpClient.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, timeoutCts.Token);
         res.EnsureSuccessStatusCode();
