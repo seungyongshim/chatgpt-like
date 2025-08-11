@@ -38,9 +38,14 @@ public class ChatService : IChatService
     {
         // GET http://localhost:4141/v1/models
         using var req = new HttpRequestMessage(HttpMethod.Get, new Uri(BaseUri, "/v1/models"));
-    using var res = await this.httpClient.SendAsync(req, ct);
+        
+        // 모델 목록 조회는 30초 타임아웃으로 설정
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(30));
+        
+        using var res = await this.httpClient.SendAsync(req, timeoutCts.Token);
         res.EnsureSuccessStatusCode();
-        using var doc = await JsonDocument.ParseAsync(await res.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
+        using var doc = await JsonDocument.ParseAsync(await res.Content.ReadAsStreamAsync(timeoutCts.Token), cancellationToken: timeoutCts.Token);
         var root = doc.RootElement;
 
         // Try OpenAI-compatible shape: { data: [{ id: "model" }, ...] }
@@ -75,7 +80,7 @@ public class ChatService : IChatService
         }
 
         // As last resort, return empty list
-        return Array.Empty<string>();
+        return [];
     }
 
     public async Task<string> GetResponseAsync(IList<ChatMessage> history, string model, double? temperature = null, int? maxTokens = null, CancellationToken ct = default)
@@ -109,9 +114,16 @@ public class ChatService : IChatService
             Content = JsonContent.Create(body, options: new JsonSerializerOptions(JsonSerializerDefaults.Web))
         };
 
-    using var res = await this.httpClient.SendAsync(req, ct);
+        // Anthropic 베타 헤더 추가
+        req.Headers.Add("anthropic_beta", "output-128k-2025-02-19");
+
+        // 채팅 응답은 3분 타임아웃으로 설정 (AI 응답이 오래 걸릴 수 있음)
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeoutCts.CancelAfter(TimeSpan.FromMinutes(3));
+
+        using var res = await this.httpClient.SendAsync(req, timeoutCts.Token);
         res.EnsureSuccessStatusCode();
-        using var doc = await JsonDocument.ParseAsync(await res.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
+        using var doc = await JsonDocument.ParseAsync(await res.Content.ReadAsStreamAsync(timeoutCts.Token), cancellationToken: timeoutCts.Token);
         var root = doc.RootElement;
         var content = root.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
         return content ?? string.Empty;
@@ -123,9 +135,14 @@ public class ChatService : IChatService
         {
             // GET http://localhost:4141/usage
             using var req = new HttpRequestMessage(HttpMethod.Get, new Uri(BaseUri, "/usage"));
-            using var res = await this.httpClient.SendAsync(req, ct);
+            
+            // 사용량 조회는 15초 타임아웃으로 설정
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(15));
+            
+            using var res = await this.httpClient.SendAsync(req, timeoutCts.Token);
             res.EnsureSuccessStatusCode();
-            using var doc = await JsonDocument.ParseAsync(await res.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
+            using var doc = await JsonDocument.ParseAsync(await res.Content.ReadAsStreamAsync(timeoutCts.Token), cancellationToken: timeoutCts.Token);
             var root = doc.RootElement;
 
             var usageInfo = new UsageInfo();
