@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.Extensions.AI;
+using OpenAI.Chat;
 using Sample.Wasm;
 using Sample.Wasm.Services;
 
@@ -13,8 +15,8 @@ builder.Services.AddScoped(sp =>
     var httpClient = new HttpClient 
     { 
         BaseAddress = new Uri(builder.HostEnvironment.BaseAddress),
-        // 기본 타임아웃을 5분으로 설정 (AI 응답이 오래 걸릴 수 있음)
-        Timeout = TimeSpan.FromMinutes(5)
+        // 기본 타임아웃을 30분으로 설정 (AI 응답이 오래 걸릴 수 있음)
+        Timeout = TimeSpan.FromMinutes(30)
     };
     return httpClient;
 });

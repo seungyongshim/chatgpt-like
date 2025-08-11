@@ -2,18 +2,22 @@ namespace Sample.Wasm.Services;
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.AI;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json;
 
 public interface IChatService
 {
     public Task<string[]> GetModelsAsync(CancellationToken ct = default);
-    public Task<string> GetResponseAsync(IList<ChatMessage> history, string model, double? temperature = null, int? maxTokens = null, CancellationToken ct = default);
+    public IAsyncEnumerable<string> GetResponseStreamingAsync(IList<ChatMessage> history, string model, double? temperature = null, int? maxTokens = null, CancellationToken ct = default);
     public Task<UsageInfo> GetUsageAsync(CancellationToken ct = default);
 }
 
@@ -83,7 +87,7 @@ public class ChatService : IChatService
         return [];
     }
 
-    public async Task<string> GetResponseAsync(IList<ChatMessage> history, string model, double? temperature = null, int? maxTokens = null, CancellationToken ct = default)
+    public async IAsyncEnumerable<string> GetResponseStreamingAsync(IList<ChatMessage> history, string model, double? temperature = null, int? maxTokens = null, [EnumeratorCancellation] CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(model))
         {
@@ -102,7 +106,7 @@ public class ChatService : IChatService
             ["model"] = model,
             ["messages"] = messages,
             ["temperature"] = temperature ?? 0.2,
-            ["stream"] = false
+            ["stream"] = true
         };
         if (maxTokens.HasValue)
         {
@@ -116,17 +120,70 @@ public class ChatService : IChatService
 
         // Anthropic 베타 헤더 추가
         req.Headers.Add("anthropic_beta", "output-128k-2025-02-19");
+        req.Options.Set(new HttpRequestOptionsKey<bool>("WebAssemblyEnableStreamingResponse"), true);
 
         // 채팅 응답은 3분 타임아웃으로 설정 (AI 응답이 오래 걸릴 수 있음)
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeoutCts.CancelAfter(TimeSpan.FromMinutes(3));
 
-        using var res = await this.httpClient.SendAsync(req, timeoutCts.Token);
+        using var res = await this.httpClient.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, timeoutCts.Token);
         res.EnsureSuccessStatusCode();
-        using var doc = await JsonDocument.ParseAsync(await res.Content.ReadAsStreamAsync(timeoutCts.Token), cancellationToken: timeoutCts.Token);
-        var root = doc.RootElement;
-        var content = root.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
-        return content ?? string.Empty;
+        
+        await using var stream = await res.Content.ReadAsStreamAsync(timeoutCts.Token);
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        
+        string? line;
+        while ((line = await reader.ReadLineAsync(timeoutCts.Token)) != null)
+        {
+            if (timeoutCts.Token.IsCancellationRequested)
+            {
+                yield break;
+            }
+                
+            // SSE 형식: "data: {json}" 또는 "data: [DONE]"
+            if (line.StartsWith("data: "))
+            {
+                var jsonPart = line[6..]; // "data: " 이후 부분
+                
+                if (jsonPart.Trim() == "[DONE]")
+                {
+                    yield break;
+                }
+                
+                string? content = null;
+                try
+                {
+                    using var doc = JsonDocument.Parse(jsonPart);
+                    var root = doc.RootElement;
+                    
+                    // OpenAI 스트리밍 형식: choices[0].delta.content
+                    if (root.TryGetProperty("choices", out var choicesEl) && 
+                        choicesEl.ValueKind == JsonValueKind.Array)
+                    {
+                        var firstChoice = choicesEl.EnumerateArray().FirstOrDefault();
+                        if (firstChoice.ValueKind != JsonValueKind.Undefined &&
+                            firstChoice.TryGetProperty("delta", out var deltaEl) &&
+                            deltaEl.TryGetProperty("content", out var contentEl) &&
+                            contentEl.ValueKind == JsonValueKind.String)
+                        {
+                            content = contentEl.GetString();
+                        }
+                    }
+                }
+                catch (JsonException)
+                {
+                    // JSON 파싱 오류는 무시하고 계속 진행
+                    continue;
+                }
+                
+                if (!string.IsNullOrEmpty(content))
+                {
+                    yield return content;
+
+                    await Task.Delay(3, timeoutCts.Token); // 작은 지연 추가로 UI 업데이트 부드럽게
+                }
+            }
+        }
     }
 
     public async Task<UsageInfo> GetUsageAsync(CancellationToken ct = default)
