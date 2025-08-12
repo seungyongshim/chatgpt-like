@@ -122,6 +122,10 @@
                         else
                         {
                             @m.Text
+                            @if (m.Role == ChatRole.Assistant)
+                            {
+                                <div class="character-count">@(m.Text?.Length ?? 0)자</div>
+                            }
                         }
                     </div>
                 }
@@ -1139,6 +1143,27 @@
 .msg:hover { 
     opacity: 0.8; 
 }
+.character-count {
+    position: absolute;
+    bottom: 4px;
+    left: 8px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.8);
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 500;
+    pointer-events: none;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+[data-theme="dark"] .character-count {
+    background: rgba(0, 0, 0, 0.6);
+    color: var(--text-muted);
+}
+.msg.assistant:hover .character-count {
+    opacity: 1;
+}
 .msg.user { 
     background: var(--msg-user-bg); 
     align-self: flex-end; 
@@ -1148,6 +1173,7 @@
     background: var(--msg-assistant-bg); 
     align-self: flex-start; 
     color: var(--text-primary);
+    padding-bottom: 1.5rem; /* 글자수 카운트 공간 확보 */
 }
 .msg.system { 
     background: var(--msg-system-bg);
