@@ -109,7 +109,7 @@
                                     <button class="btn btn-danger btn-sm" @onclick="() => DeleteMessage(index)">삭제</button>
                                     @if (m.Role == ChatRole.User)
                                     {
-                                        <button class="btn btn-warning btn-sm" @onclick="() => ResendMessage(index)">
+                                        <button class="btn btn-warning btn-sm" @onclick="() => ResendMessageWithCancellation(index)">
                                             <i class="oi oi-reload"></i> 재전송
                                         </button>
                                     }
@@ -152,11 +152,11 @@
 
                 <!-- Controls Row -->
                 <div class="controls-row d-flex align-items-center gap-2">
-                    <button class="btn btn-primary flex-grow-1" disabled="@(_sending || string.IsNullOrWhiteSpace(UserInput) || string.IsNullOrWhiteSpace(EffectiveModel))" @onclick="SendAsync">
+                    <button class="btn @(_sending ? "btn-danger" : "btn-primary") flex-grow-1" disabled="@(!_sending && (string.IsNullOrWhiteSpace(UserInput) || string.IsNullOrWhiteSpace(EffectiveModel)))" @onclick="OnSendOrCancelAsync">
                         @if (_sending)
                         {
                             <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                            <span>전송 중...</span>
+                            <span>취소</span>
                         }
                         else
                         {
@@ -473,19 +473,42 @@
         }
     }
 
-    async Task SendAsync()
+    CancellationTokenSource? _localCts; // 지역적 CTS
+
+    async Task OnSendOrCancelAsync()
     {
-        if (string.IsNullOrWhiteSpace(UserInput) || _sending)
+        if (_sending)
+        {
+            // 취소 버튼 클릭 시
+            _localCts?.Cancel();
+            return;
+        }
+        
+        if (string.IsNullOrWhiteSpace(UserInput))
+            return;
+            
+        _localCts = new CancellationTokenSource();
+        await SendAsync(_localCts.Token);
+    }
+
+    async Task SendAsync(CancellationToken cancellationToken = default)
+    {
+        if (_sending)
             return;
 
-        var input = UserInput.Trim();
-        UserInput = string.Empty;
+        // UserInput이 있으면 새 메시지로 추가
+        if (!string.IsNullOrWhiteSpace(UserInput))
+        {
+            var input = UserInput.Trim();
+            UserInput = string.Empty;
+            Messages.Add(new(ChatRole.User, input));
+        }
+
         _sending = true;
 
         try
         {
             Error = null;
-            Messages.Add(new(ChatRole.User, input));
             var model = EffectiveModel;
             if (string.IsNullOrWhiteSpace(model))
             {
@@ -500,11 +523,18 @@
 
             // Get streaming response and update the message in real-time
             var responseBuilder = new StringBuilder();
-            await foreach (var chunk in ChatService.GetResponseStreamingAsync(Messages.Take(Messages.Count - 1).ToList(), model, Temperature, MaxTokens))
+            try
             {
-                responseBuilder.Append(chunk);
-                Messages[assistantIndex] = new ChatMessage(ChatRole.Assistant, responseBuilder.ToString());
-                StateHasChanged();
+                await foreach (var chunk in ChatService.GetResponseStreamingAsync(Messages.Take(Messages.Count - 1).ToList(), model, Temperature, MaxTokens, cancellationToken))
+                {
+                    responseBuilder.Append(chunk);
+                    Messages[assistantIndex] = new ChatMessage(ChatRole.Assistant, responseBuilder.ToString());
+                    StateHasChanged();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // 사용자가 취소 - 오류로 간주하지 않음
             }
 
             UpdateCurrentSessionTitle();
@@ -513,6 +543,10 @@
             
             // Update usage info after sending message
             _ = LoadUsageAsync(); // Fire and forget to not block UI
+        }
+        catch (OperationCanceledException)
+        {
+            // 취소는 정상 흐름으로 처리
         }
         catch (Exception ex)
         {
@@ -526,6 +560,8 @@
         finally
         {
             _sending = false;
+            _localCts?.Dispose();
+            _localCts = null;
             StateHasChanged();
         }
     }
@@ -886,7 +922,7 @@
         }
     }
 
-    async Task ResendMessage(int index)
+    async Task ResendMessage(int index, CancellationToken cancellationToken = default)
     {
         if (index < 0 || index >= Messages.Count || Messages[index].Role != ChatRole.User)
             return;
@@ -910,51 +946,20 @@
         // 사용자 메시지 다시 추가하고 AI 응답 요청
         Messages.Add(new ChatMessage(ChatRole.User, messageText));
         
-        _sending = true;
-        try
-        {
-            Error = null;
-            var model = EffectiveModel;
-            if (string.IsNullOrWhiteSpace(model))
-            {
-                Error = "모델을 선택하거나 입력하세요.";
-                return;
-            }
+        await SendAsync(cancellationToken);
+    }
 
-            // Add empty assistant message that will be filled as streaming comes in
-            var assistantMessage = new ChatMessage(ChatRole.Assistant, "");
-            Messages.Add(assistantMessage);
-            var assistantIndex = Messages.Count - 1;
-
-            // Get streaming response and update the message in real-time
-            var responseBuilder = new StringBuilder();
-            await foreach (var chunk in ChatService.GetResponseStreamingAsync(Messages.Take(Messages.Count - 1).ToList(), model, Temperature, MaxTokens))
-            {
-                responseBuilder.Append(chunk);
-                Messages[assistantIndex] = new ChatMessage(ChatRole.Assistant, responseBuilder.ToString());
-                StateHasChanged();
-            }
-
-            UpdateCurrentSessionTitle();
-            await SaveSessions();
-            
-            // Update usage info after resending message
-            _ = LoadUsageAsync(); // Fire and forget to not block UI
-        }
-        catch (Exception ex)
+    async Task ResendMessageWithCancellation(int index)
+    {
+        if (_sending)
         {
-            Error = ex.Message;
-            // Remove the empty assistant message if there was an error
-            if (Messages.Count > 0 && Messages[^1].Role == ChatRole.Assistant && string.IsNullOrEmpty(Messages[^1].Text))
-            {
-                Messages.RemoveAt(Messages.Count - 1);
-            }
+            // 이미 실행 중이면 취소
+            _localCts?.Cancel();
+            return;
         }
-        finally
-        {
-            _sending = false;
-            StateHasChanged();
-        }
+        
+        _localCts = new CancellationTokenSource();
+        await ResendMessage(index, _localCts.Token);
     }
 
     async Task ToggleTheme()
