@@ -29,7 +29,7 @@
     <!-- 모바일 오버레이 -->
     @if (ShowMobileHistory)
     {
-        <div class="mobile-overlay" @onclick="CloseMobileHistory"></div>
+        <div class="mobile-overlay show" @onclick="CloseMobileHistory"></div>
     }
 
     <aside class="history @(ShowMobileHistory ? "mobile-open" : "")">
@@ -1456,6 +1456,46 @@
     
     .theme-toggle i {
         font-size: 1rem;
+    }
+}
+
+/* 모바일 반응형 스타일 */
+@@media (max-width: 991.98px) {
+    .chat-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    
+    .mobile-header {
+        display: flex !important;
+    }
+    
+    .chat-main {
+        padding-top: 60px; /* 모바일 헤더 높이만큼 */
+    }
+    
+    .history {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 280px;
+        height: 100%;
+        z-index: 1045;
+        transform: translateX(-100%);
+        border-right: 1px solid var(--border-color);
+        box-shadow: var(--shadow);
+    }
+    
+    .history.mobile-open {
+        transform: translateX(0);
+    }
+    
+    .mobile-overlay.show {
+        display: block !important;
+    }
+    
+    .composer {
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 12px));
     }
 }
 </style>
