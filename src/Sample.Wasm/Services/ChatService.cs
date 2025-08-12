@@ -119,7 +119,7 @@ public class ChatService : IChatService
         };
 
         // Anthropic 베타 헤더 추가
-        req.Headers.Add("anthropic_beta", "output-128k-2025-02-19");
+        req.Headers.Add("anthropic-beta", "output-128k-2025-02-19");
         req.Options.Set(new HttpRequestOptionsKey<bool>("WebAssemblyEnableStreamingResponse"), true);
 
         // 채팅 응답은 30분 타임아웃으로 설정 (AI 응답이 오래 걸릴 수 있음)
