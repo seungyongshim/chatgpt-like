@@ -1,0 +1,73 @@
+@using Microsoft.Extensions.AI
+@inject IJSRuntime JS
+
+<div class="msg @(GetRoleClass()) @(IsEditing ? "editing" : "")" @onclick="OnStartEdit">
+    @if (IsEditing)
+    {
+        <div class="editing-container" @onclick:stopPropagation="true">
+            <textarea id="edit-textarea-@MessageIndex" class="form-control mb-2" @bind="EditText" @bind:after="OnAutoResize" style="min-height: 120px; resize: vertical; overflow-y: hidden;"></textarea>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-primary btn-sm" @onclick="OnSaveEdit">저장</button>
+                <button class="btn btn-secondary btn-sm" @onclick="OnCancelEdit">취소</button>
+                @if (Message.Role != ChatRole.System)
+                {
+                    <button class="btn btn-danger btn-sm" @onclick="OnDeleteMessage">삭제</button>
+                }
+                @if (Message.Role == ChatRole.User)
+                {
+                    <button class="btn btn-warning btn-sm" @onclick="OnResendMessage">
+                        <i class="oi oi-reload"></i> 재전송
+                    </button>
+                }
+                <button class="btn btn-info btn-sm" @onclick="() => OnCopyToClipboard.InvokeAsync(EditText)">
+                    <i class="oi oi-clipboard"></i> 복사
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+        @if (Message.Role == ChatRole.System)
+        {
+            <div class="system-badge">시스템</div>
+        }
+        @Message.Text
+        @if (Message.Role == ChatRole.Assistant)
+        {
+            <div class="character-count">@(Message.Text?.Length ?? 0)자</div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public ChatMessage Message { get; set; } = null!;
+    [Parameter] public int MessageIndex { get; set; }
+    [Parameter] public bool IsEditing { get; set; }
+    [Parameter] public string EditText { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnStartEdit { get; set; }
+    [Parameter] public EventCallback OnSaveEdit { get; set; }
+    [Parameter] public EventCallback OnCancelEdit { get; set; }
+    [Parameter] public EventCallback OnDeleteMessage { get; set; }
+    [Parameter] public EventCallback OnResendMessage { get; set; }
+    [Parameter] public EventCallback<string> OnCopyToClipboard { get; set; }
+
+    private string GetRoleClass()
+    {
+        if (Message.Role == ChatRole.User) return "user";
+        if (Message.Role == ChatRole.Assistant) return "assistant";
+        if (Message.Role == ChatRole.System) return "system";
+        return "assistant";
+    }
+
+    private async Task OnAutoResize()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("autoResizeTextarea", $"edit-textarea-{MessageIndex}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error auto-resizing textarea: {ex.Message}");
+        }
+    }
+}

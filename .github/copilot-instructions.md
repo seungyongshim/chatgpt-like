@@ -47,10 +47,15 @@ await JS.InvokeVoidAsync("localStorage.setItem", "CHAT_SESSIONS", json);
 
 ### Build & Run
 ```powershell
-cd "c:\2026\chatgpt-like\src\Sample.Wasm"
+cd "d:\2025\chatgpt-like\src\Sample.Wasm"
 dotnet build    # Builds the WebAssembly app
-dotnet run      # Starts dev server
+dotnet run      # Starts dev server on http://localhost:5045
 ```
+
+### Infrastructure Setup
+- **Docker Compose**: Basic setup in `infrastructure/docker-compose.yml` 
+- **Target Framework**: .NET 9.0 with nullable reference types enabled
+- **HttpClient Timeout**: 30-minute timeout for AI responses, configurable per operation
 
 ### CSS Architecture
 - **CSS Variables**: Theme system using `--bg-primary`, `--text-primary`, etc.
@@ -58,10 +63,11 @@ dotnet run      # Starts dev server
 - **Mobile Breakpoint**: `@media (max-width: 768px)` for responsive behavior
 
 ### Dependencies & External Services
-- **Microsoft.Extensions.AI**: For chat completions and model abstraction
+- **Microsoft.Extensions.AI**: For chat completions and model abstraction (.NET 9.0)
 - **Bootstrap 5.3.3**: UI components (loaded from CDN)
 - **Open Iconic**: Icon font for UI elements
 - **Local AI Service**: Must run on `localhost:4141` with OpenAI-compatible endpoints
+- **Anthropic Beta Headers**: Automatically added for enhanced API compatibility
 
 ## Critical Implementation Details
 
@@ -78,10 +84,13 @@ dotnet run      # Starts dev server
 
 ### JavaScript Interop Functions
 Key functions exposed to C#:
-- `initializeIndexedDB()`: Initialize storage
-- `saveSessionsToIndexedDB(sessions)`: Persist chat data
-- `copyToClipboard(text)`: Cross-browser clipboard
+- `initializeIndexedDB()`: Initialize storage database
+- `saveSessionsToIndexedDB(sessions)`: Persist chat data with C# property conversion
+- `loadSessionsFromIndexedDB()`: Retrieve sessions with proper case conversion
+- `copyToClipboard(text)`: Cross-browser clipboard with fallback
 - `autoResizeTextarea(elementId)`: Dynamic textarea sizing
+- `testIndexedDB()`: Debug function to verify storage operations
+- `clearIndexedDB()`: Development helper to reset all data
 
 ## Troubleshooting & Debugging
 

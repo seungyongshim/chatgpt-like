@@ -1,0 +1,86 @@
+@using Microsoft.AspNetCore.Components.Web
+
+<div class="composer container-fluid py-2">
+    <div class="input-section d-flex flex-column gap-2">
+        <textarea @bind="UserInput" class="form-control" style="min-height: 90px" placeholder="메시지를 입력하세요" @onkeydown="HandleKeyDown"></textarea>
+        
+        <!-- Model Selection Row -->
+        <div class="model-selection-row d-flex align-items-center gap-2">
+            <label class="model-label mb-0">모델:</label>
+            @if (AvailableModels?.Length > 0)
+            {
+                <select class="form-select flex-grow-1" @bind="SelectedModel">
+                    @foreach (var m in AvailableModels)
+                    {
+                        <option value="@m">@m</option>
+                    }
+                </select>
+            }
+            else
+            {
+                <input class="form-control flex-grow-1" placeholder="모델 ID 직접 입력 (예: gpt-4o-mini)" @bind="SelectedModel" />
+            }
+        </div>
+
+        <!-- Controls Row -->
+        <div class="controls-row d-flex align-items-center gap-2">
+            <button class="btn @(IsSending ? "btn-danger" : "btn-primary") flex-grow-1" disabled="@(!IsSending && (string.IsNullOrWhiteSpace(UserInput) || string.IsNullOrWhiteSpace(EffectiveModel)))" @onclick="OnSendOrCancel">
+                @if (IsSending)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    <span>취소</span>
+                }
+                else
+                {
+                    <span>보내기</span>
+                }
+            </button>
+            <button class="btn btn-outline-secondary" type="button" @onclick="OnToggleSettings">
+                <i class="oi oi-cog"></i>
+            </button>
+        </div>
+
+        <!-- Usage Info Component -->
+        <UsageInfo CurrentUsage="@CurrentUsage" LoadingUsage="@LoadingUsage" OnRefreshUsage="@OnRefreshUsage" />
+
+        @if (!string.IsNullOrEmpty(Error))
+        {
+            <div class="error">@Error</div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string UserInput { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> UserInputChanged { get; set; }
+    [Parameter] public string[] AvailableModels { get; set; } = Array.Empty<string>();
+    [Parameter] public string SelectedModel { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> SelectedModelChanged { get; set; }
+    [Parameter] public string EffectiveModel { get; set; } = string.Empty;
+    [Parameter] public bool IsSending { get; set; }
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public Sample.Wasm.Services.UsageInfo? CurrentUsage { get; set; }
+    [Parameter] public bool LoadingUsage { get; set; }
+    [Parameter] public EventCallback OnSendOrCancel { get; set; }
+    [Parameter] public EventCallback OnToggleSettings { get; set; }
+    [Parameter] public EventCallback OnModelChanged { get; set; }
+    [Parameter] public EventCallback OnRefreshUsage { get; set; }
+
+    Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        // 모바일에서는 Enter가 줄바꿈, 전송은 버튼으로만
+        return Task.CompletedTask;
+    }
+
+    private async Task OnUserInputChanged(string value)
+    {
+        UserInput = value;
+        await UserInputChanged.InvokeAsync(value);
+    }
+
+    private async Task OnSelectedModelChanged(string value)
+    {
+        SelectedModel = value;
+        await SelectedModelChanged.InvokeAsync(value);
+    }
+}

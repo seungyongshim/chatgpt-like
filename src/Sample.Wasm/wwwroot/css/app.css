@@ -1,4 +1,10 @@
 ﻿@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+@import url('chat-sidebar.css');
+@import url('chat-input.css');
+@import url('usage-info.css');
+@import url('index.css');
+@import url('message-display.css');
+@import url('settings-panel.css');
 
 :root {
     /* Light theme colors */

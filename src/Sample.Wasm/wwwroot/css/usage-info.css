@@ -1,0 +1,114 @@
+/* UsageInfo Styles */
+
+.usage-info-row { 
+    padding: 0.75rem;
+    background: var(--usage-bg);
+    border-radius: 8px;
+    border: 1px solid var(--usage-border);
+    margin-top: 0.5rem;
+    box-shadow: var(--shadow);
+}
+
+.usage-info {
+    flex-grow: 1;
+}
+
+.usage-display {
+    align-items: center;
+    gap: 1rem;
+}
+
+.usage-text-info {
+    min-width: 120px;
+    flex-shrink: 0;
+}
+
+.usage-info .oi-pulse {
+    color: #007bff;
+    font-size: 1rem;
+}
+
+.usage-info .oi-info {
+    color: var(--usage-text);
+}
+
+.usage-percentage {
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.usage-label {
+    margin-top: 2px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.usage-progress-inline {
+    max-width: 200px;
+    min-width: 150px;
+}
+
+.usage-progress-inline .progress {
+    height: 6px;
+    background-color: rgba(0,0,0,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.usage-progress-inline .progress-bar {
+    transition: width 0.6s ease;
+    border-radius: 3px;
+    background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem;
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    font-size: 0.65rem;
+    color: var(--usage-text);
+    font-weight: 500;
+}
+
+.usage-refresh-btn {
+    transition: all 0.25s ease;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.usage-refresh-btn:hover {
+    color: #007bff !important;
+    background-color: rgba(0,123,255,0.1);
+    transform: scale(1.1);
+}
+
+.usage-refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.usage-refresh-btn:disabled:hover {
+    background-color: transparent;
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes progress-bar-stripes {
+    from { background-position: 1rem 0; }
+    to { background-position: 0 0; }
+}

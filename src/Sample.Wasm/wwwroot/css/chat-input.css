@@ -1,0 +1,50 @@
+/* ChatInput Styles */
+
+.composer { 
+    padding: .75rem; 
+    border-top: 1px solid var(--border-light);
+    background: var(--bg-primary);
+    /* 안전영역 고려하되 과도하지 않게 */
+    padding-bottom: calc(.75rem + env(safe-area-inset-bottom, 12px));
+}
+
+.model-label { 
+    font-weight: 500; 
+    color: var(--text-secondary); 
+    min-width: 50px; 
+}
+
+.hint { 
+    color: var(--text-muted); 
+    font-size: .85rem; 
+    margin-top: .25rem; 
+}
+
+.error { 
+    color: var(--error-color); 
+    margin-top: .5rem; 
+}
+
+/* Form controls theming */
+.form-control, .form-select {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--btn-primary-bg);
+    box-shadow: 0 0 0 0.2rem rgba(66, 139, 202, 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+@media (max-width: 991.98px) {
+    .composer {
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 12px));
+    }
+}

@@ -1,0 +1,81 @@
+<!-- Usage Info Row -->
+<div class="usage-info-row">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="usage-info flex-grow-1">
+            @if (LoadingUsage)
+            {
+                <div class="d-flex align-items-center">
+                    <span class="text-muted small">
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        사용량 로딩 중...
+                    </span>
+                </div>
+            }
+            else if (CurrentUsage?.PremiumRequestsUsed.HasValue == true && CurrentUsage?.TotalPremiumRequests.HasValue == true)
+            {
+                var used = CurrentUsage.PremiumRequestsUsed.Value;
+                var total = CurrentUsage.TotalPremiumRequests.Value;
+                var percentage = total > 0 ? (used * 100.0 / total) : 0;
+                string colorClass;
+                string progressClass;
+                if (percentage < 50)
+                {
+                    colorClass = "text-success";
+                    progressClass = "bg-success";
+                }
+                else if (percentage < 80)
+                {
+                    colorClass = "text-warning";
+                    progressClass = "bg-warning";
+                }
+                else
+                {
+                    colorClass = "text-danger";
+                    progressClass = "bg-danger";
+                }
+                
+                <div class="usage-display d-flex align-items-center gap-3">
+                    <div class="usage-text-info">
+                        <span class="@colorClass small">
+                            <i class="oi oi-pulse me-1"></i>
+                            <strong>@used</strong> / @total 
+                            <span class="usage-percentage ms-1">(@percentage.ToString("F1")%)</span>
+                        </span>
+                    </div>
+                    
+                    <div class="usage-progress-inline flex-grow-1">
+                        <div class="progress">
+                            <div class="progress-bar @progressClass" 
+                                 role="progressbar" 
+                                 style="width: @percentage.ToString("F1")%" 
+                                 aria-valuenow="@used" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="@total">
+                            </div>
+                        </div>
+                        <div class="progress-labels">
+                            <span>0</span>
+                            <span>@total</span>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (CurrentUsage != null)
+            {
+                <span class="text-muted small">
+                    <i class="oi oi-info me-1"></i>
+                    사용량 정보를 가져올 수 없습니다
+                </span>
+            }
+        </div>
+        <button class="btn btn-link btn-sm p-1 text-muted usage-refresh-btn" @onclick="OnRefreshUsage" title="사용량 새로고침" disabled="@LoadingUsage">
+            <i class="oi oi-reload @(LoadingUsage ? "spinning" : "")" style="font-size: 0.9rem;"></i>
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Sample.Wasm.Services.UsageInfo? CurrentUsage { get; set; }
+    [Parameter] public bool LoadingUsage { get; set; }
+    [Parameter] public EventCallback OnRefreshUsage { get; set; }
+}

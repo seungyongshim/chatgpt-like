@@ -1,0 +1,88 @@
+/* Index Page Styles */
+
+.chat-layout { 
+    display: grid; 
+    grid-template-columns: 260px 1fr; 
+    /* 기본 100vh, 지원하면 100dvh, 마지막으로 JS가 주입하는 실측 높이 사용 */
+    height: 100vh; 
+    height: 100dvh; 
+    height: var(--app-vh, 100dvh);
+    position: relative; 
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.chat-main { 
+    display: grid; 
+    grid-template-rows: 1fr auto; 
+    height: 100%; 
+    background-color: var(--bg-primary);
+}
+
+.chat-container { 
+    padding: 1rem; 
+    display: flex; 
+    flex-direction: column; 
+    gap: .5rem; 
+    overflow: auto; 
+    margin-bottom: 1rem;
+    padding-bottom: 96px; /* 입력 영역을 고려한 적정 여백 */
+    background-color: var(--bg-primary);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1060;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+}
+
+.theme-toggle:hover {
+    background: var(--bg-secondary);
+    transform: scale(1.1);
+}
+
+.theme-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(66, 139, 202, 0.25);
+}
+
+.theme-toggle i {
+    font-size: 1.2rem;
+}
+
+/* 모바일 반응형 스타일 */
+@media (max-width: 991.98px) {
+    .chat-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    
+    .chat-main {
+        padding-top: 60px; /* 모바일 헤더 높이만큼 */
+    }
+    
+    .theme-toggle {
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .theme-toggle i {
+        font-size: 1rem;
+    }
+}
