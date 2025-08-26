@@ -328,3 +328,32 @@ window.clearIndexedDB = async () => {
         return false;
     }
 };
+
+// 채팅 컨테이너를 맨 아래로 스크롤
+window.scrollToBottom = () => {
+    try {
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            console.log('Scrolled to bottom');
+        }
+    } catch (error) {
+        console.error('Error scrolling to bottom:', error);
+    }
+};
+
+// 부드럽게 맨 아래로 스크롤
+window.smoothScrollToBottom = () => {
+    try {
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+            chatContainer.scrollTo({
+                top: chatContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+            console.log('Smooth scrolled to bottom');
+        }
+    } catch (error) {
+        console.error('Error smooth scrolling to bottom:', error);
+    }
+};
