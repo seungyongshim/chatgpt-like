@@ -15,6 +15,7 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    min-height: var(--app-vh, 100vh);
     background-color: var(--bg-primary);
     position: relative;
     /* 하단 고정 입력창을 위한 여백 - 조금 더 넉넉하게 */
@@ -29,11 +30,11 @@
     /* 스크롤 제거 - 전체 페이지 스크롤 사용 */
     overflow: visible;
     margin-bottom: 0;
-    /* 하단 패딩을 좀 더 넉넉하게 */
-    padding-bottom: 3rem;
+    /* 하단 패딩을 입력창 높이보다 더 넉넉하게 - 데스크톱 */
+    padding-bottom: 180px;
     background-color: var(--bg-primary);
-    /* 자동 높이로 변경 */
-    min-height: calc(100vh - 140px);
+    /* 자동 높이로 변경 - viewport height 변수 활용 */
+    min-height: calc(var(--app-vh, 100vh) - 140px);
     flex: 1;
 }
 
@@ -85,7 +86,9 @@
     }
     
     .chat-container {
-        min-height: calc(100vh - 220px); /* 모바일 헤더 + 입력창 고려 */
+        min-height: calc(var(--app-vh, 100vh) - 220px); /* 모바일 헤더 + 입력창 고려 */
+        /* 모바일에서는 더 큰 여백 */
+        padding-bottom: 200px;
     }
     
     .theme-toggle {

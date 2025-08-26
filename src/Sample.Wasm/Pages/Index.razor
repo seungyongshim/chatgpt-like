@@ -368,8 +368,8 @@
             Console.WriteLine("StateHasChanged called");
             
             // 사용자 메시지 추가 후 스크롤 (DOM 업데이트 대기)
-            await Task.Delay(10);
-            await JS.InvokeVoidAsync("scrollToBottom");
+            await Task.Delay(50);
+            await JS.InvokeVoidAsync("scrollToBottomForNewMessage");
         }
         else
         {
@@ -408,16 +408,13 @@
                     Messages[assistantIndex] = new ChatMessage(ChatRole.Assistant, responseBuilder.ToString());
                     StateHasChanged();
                     
-                    // 스트리밍 중에도 주기적으로 스크롤 (매 청크마다는 너무 자주이므로 적당히 조절)
-                    if (responseBuilder.Length % 50 == 0) // 50자마다 스크롤
-                    {
-                        await JS.InvokeVoidAsync("scrollToBottom");
-                    }
+                    // 스트리밍 중에도 주기적으로 스크롤 (throttled 버전 사용)
+                    await JS.InvokeVoidAsync("scrollToBottomThrottled");
                 }
                 
                 // 어시스턴트 응답 완료 후 스크롤 (DOM 업데이트 대기)
-                await Task.Delay(10);
-                await JS.InvokeVoidAsync("scrollToBottom");
+                await Task.Delay(50);
+                await JS.InvokeVoidAsync("scrollToBottomForNewMessage");
             }
             catch (OperationCanceledException)
             {
@@ -744,8 +741,8 @@
             await SaveSessions();
             
             // 메시지 편집 후 스크롤
-            await Task.Delay(10);
-            await JS.InvokeVoidAsync("scrollToBottom");
+            await Task.Delay(50);
+            await JS.InvokeVoidAsync("scrollToBottomIfEnabled");
         }
     }
 
@@ -782,8 +779,8 @@
             await SaveSessions();
             
             // 메시지 삭제 후 스크롤
-            await Task.Delay(10);
-            await JS.InvokeVoidAsync("scrollToBottom");
+            await Task.Delay(50);
+            await JS.InvokeVoidAsync("scrollToBottomIfEnabled");
             return;
         }
         
@@ -808,8 +805,8 @@
         await SaveSessions();
         
         // 메시지 삭제 후 스크롤
-        await Task.Delay(10);
-        await JS.InvokeVoidAsync("scrollToBottom");
+        await Task.Delay(50);
+        await JS.InvokeVoidAsync("scrollToBottomIfEnabled");
     }
 
     void ToggleMobileHistory()
@@ -929,9 +926,13 @@
             // 스크롤 감지 설정
             await JS.InvokeVoidAsync("setupScrollDetection");
             
+            // 모바일 환경 최적화 설정
+            await JS.InvokeVoidAsync("setupMobileKeyboardDetection");
+            await JS.InvokeVoidAsync("setupMobileInputFocus");
+            
             // 페이지 첫 로드 시 맨 아래로 스크롤 (약간의 지연 후)
-            await Task.Delay(100);
-            await JS.InvokeVoidAsync("scrollToBottom");
+            await Task.Delay(150);
+            await JS.InvokeVoidAsync("scrollToBottomForNewMessage");
         }
         else
         {
