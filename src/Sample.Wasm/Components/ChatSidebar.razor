@@ -26,7 +26,7 @@
         </div>
     </div>
     <ul>
-        @foreach (var s in Sessions)
+        @foreach (var s in Sessions.OrderByDescending(s => s.LastUpdated))
         {
             <li class="@(s.Id == CurrentSessionId ? "active" : null)">
                 <div class="session-item" @onclick="() => OnSwitchSession.InvokeAsync(s.Id)">

@@ -49,7 +49,7 @@ await JS.InvokeVoidAsync("localStorage.setItem", "CHAT_SESSIONS", json);
 ```powershell
 cd "d:\2025\chatgpt-like\src\Sample.Wasm"
 dotnet build    # Builds the WebAssembly app
-dotnet run      # Starts dev server on http://localhost:5045
+dotnet run --project     # Starts dev server on http://localhost:5045
 ```
 
 ### Infrastructure Setup

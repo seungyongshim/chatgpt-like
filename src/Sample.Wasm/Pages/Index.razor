@@ -68,8 +68,12 @@
         </div>
 
         <ChatInput UserInput="@UserInput"
+                   UserInputChanged="@OnUserInputChanged"
+                   Temperature="@Temperature"
+                   TemperatureChanged="@OnTemperatureChanged"
                    AvailableModels="@AvailableModels"
                    SelectedModel="@SelectedModel"
+                   SelectedModelChanged="@(async (string value) => { SelectedModel = value; await LoadModelSettings(); })"
                    EffectiveModel="@EffectiveModel"
                    IsSending="@_sending"
                    Error="@Error"
@@ -84,7 +88,6 @@
 
 <SettingsPanel ShowSettings="@ShowSettingsOverlay"
                SystemMessage="@SystemMessage"
-               Temperature="@Temperature"
                MaxTokens="@MaxTokens"
                DefaultModel="@DefaultModel"
                SaveStatus="@SaveStatus"
@@ -107,6 +110,24 @@
         new(ChatRole.System, "You are a helpful assistant.")
     };
 
+    void OnUserInputChanged(string value)
+    {
+        Console.WriteLine($"=== Index OnUserInputChanged ===");
+        Console.WriteLine($"Old UserInput: '{UserInput}'");
+        Console.WriteLine($"New UserInput: '{value}'");
+        UserInput = value;
+        Console.WriteLine($"UserInput updated to: '{UserInput}'");
+    }
+
+    void OnTemperatureChanged(double value)
+    {
+        Console.WriteLine($"=== Index OnTemperatureChanged ===");
+        Console.WriteLine($"Old Temperature: {Temperature}");
+        Console.WriteLine($"New Temperature: {value}");
+        Temperature = value;
+        Console.WriteLine($"Temperature updated to: {Temperature}");
+    }
+
     List<Session> Sessions { get; set; } = new();
     Guid CurrentSessionId { get; set; }
     string SelectedModel { get; set; } = string.Empty;
@@ -114,7 +135,7 @@
     double Temperature { get; set; } = 1.5;
     int? MaxTokens { get; set; }
     string EffectiveModel => string.IsNullOrWhiteSpace(SelectedModel)
-        ? (AvailableModels.Length > 0 ? AvailableModels[0] : string.Empty)
+        ? (AvailableModels.Length > 0 ? AvailableModels[0] : "gpt-4o")
         : SelectedModel;
     string DefaultModel { get; set; } = string.Empty;
     string? SaveStatus;
@@ -198,7 +219,12 @@
             Console.WriteLine($"Loaded {sessionDtos?.Count ?? 0} sessions from IndexedDB");
             if (sessionDtos != null && sessionDtos.Count > 0)
             {
-                Sessions = sessionDtos.Select(d => new Session { Id = d.Id, Title = d.Title, History = d.History.Select(x => new ChatMessage(ParseRole(x.Role), x.Text)).ToList() }).ToList();
+                Sessions = sessionDtos.Select(d => new Session { 
+                    Id = d.Id, 
+                    Title = d.Title, 
+                    History = d.History.Select(x => new ChatMessage(ParseRole(x.Role), x.Text)).ToList(),
+                    LastUpdated = d.LastUpdated
+                }).ToList();
                 Console.WriteLine($"Converted to {Sessions.Count} sessions");
             }
         }
@@ -214,7 +240,12 @@
                     var parsed = System.Text.Json.JsonSerializer.Deserialize<List<SessionDto>>(json);
                     if (parsed is not null)
                     {
-                        Sessions = parsed.Select(d => new Session { Id = d.Id, Title = d.Title, History = d.History.Select(x => new ChatMessage(ParseRole(x.Role), x.Text)).ToList() }).ToList();
+                        Sessions = parsed.Select(d => new Session { 
+                            Id = d.Id, 
+                            Title = d.Title, 
+                            History = d.History.Select(x => new ChatMessage(ParseRole(x.Role), x.Text)).ToList(),
+                            LastUpdated = d.LastUpdated
+                        }).ToList();
                         Console.WriteLine($"Loaded {Sessions.Count} sessions from localStorage fallback");
                     }
                 }
@@ -223,20 +254,33 @@
         }
         if (Sessions.Count == 0)
         {
+            // Load system message from settings first
+            var savedSystemMessage = await JS.InvokeAsync<string>("localStorage.getItem", "SYSTEM_MESSAGE");
+            if (!string.IsNullOrWhiteSpace(savedSystemMessage))
+            {
+                SystemMessage = savedSystemMessage;
+            }
+            
             var sid = Guid.NewGuid();
-            Sessions.Add(new Session { Id = sid, Title = "새 대화", History = new(Messages) });
+            Sessions.Add(new Session { Id = sid, Title = "새 대화", History = new(Messages), LastUpdated = DateTime.Now, SystemMessage = SystemMessage });
         }
         CurrentSessionId = Sessions[0].Id;
         Messages = Sessions[0].History;
 
-        // Load system message
-        var savedSystemMessage = await JS.InvokeAsync<string>("localStorage.getItem", "SYSTEM_MESSAGE");
-        if (!string.IsNullOrWhiteSpace(savedSystemMessage))
+        // 현재 세션의 시스템 메시지를 UI에 반영
+        var currentSession = Sessions[0];
+        if (!string.IsNullOrEmpty(currentSession.SystemMessage))
         {
-            SystemMessage = savedSystemMessage;
-            if (Messages.Count > 0 && Messages[0].Role == ChatRole.System)
+            SystemMessage = currentSession.SystemMessage;
+        }
+        else
+        {
+            // 기존 세션에 SystemMessage가 없으면 현재 설정값을 저장
+            var savedSystemMessage = await JS.InvokeAsync<string>("localStorage.getItem", "SYSTEM_MESSAGE");
+            if (!string.IsNullOrWhiteSpace(savedSystemMessage))
             {
-                Messages[0] = new ChatMessage(ChatRole.System, SystemMessage);
+                SystemMessage = savedSystemMessage;
+                currentSession.SystemMessage = SystemMessage;
             }
         }
 
@@ -269,15 +313,25 @@
 
     async Task OnSendOrCancelAsync()
     {
+        Console.WriteLine($"=== OnSendOrCancelAsync START ===");
+        Console.WriteLine($"_sending: {_sending}");
+        Console.WriteLine($"UserInput: '{UserInput}'");
+        Console.WriteLine($"UserInput.Length: {UserInput?.Length ?? 0}");
+        Console.WriteLine($"Messages.Count: {Messages.Count}");
+        
         if (_sending)
         {
             // 취소 버튼 클릭 시
+            Console.WriteLine("Cancelling current operation");
             _localCts?.Cancel();
             return;
         }
         
         if (string.IsNullOrWhiteSpace(UserInput))
+        {
+            Console.WriteLine("UserInput is empty, returning");
             return;
+        }
             
         _localCts = new CancellationTokenSource();
         await SendAsync(_localCts.Token);
@@ -285,26 +339,50 @@
 
     async Task SendAsync(CancellationToken cancellationToken = default)
     {
+        Console.WriteLine($"SendAsync called. _sending: {_sending}");
+        
         if (_sending)
+        {
+            Console.WriteLine("Already sending, returning");
             return;
+        }
 
         // UserInput이 있으면 새 메시지로 추가
         if (!string.IsNullOrWhiteSpace(UserInput))
         {
             var input = UserInput.Trim();
-            UserInput = string.Empty;
+            Console.WriteLine($"=== ADDING USER MESSAGE ===");
+            Console.WriteLine($"Input text: '{input}'");
+            Console.WriteLine($"Messages count before add: {Messages.Count}");
+            
             Messages.Add(new(ChatRole.User, input));
+            Console.WriteLine($"Messages count after add: {Messages.Count}");
+            
+            UserInput = string.Empty;
+            Console.WriteLine("UserInput cleared");
+            
+            StateHasChanged(); // 사용자 메시지 추가 후 즉시 UI 업데이트
+            Console.WriteLine("StateHasChanged called");
+        }
+        else
+        {
+            Console.WriteLine("UserInput is null, empty, or whitespace - not adding message");
         }
 
         _sending = true;
+        Console.WriteLine("Set _sending to true");
 
         try
         {
             Error = null;
             var model = EffectiveModel;
+            Console.WriteLine($"Using model: '{model}'");
+            
             if (string.IsNullOrWhiteSpace(model))
             {
                 Error = "모델을 선택하거나 입력하세요.";
+                Console.WriteLine($"Model is empty, setting error: {Error}");
+                StateHasChanged(); // 오류 상태 업데이트
                 return;
             }
 
@@ -330,6 +408,11 @@
             }
 
             UpdateCurrentSessionTitle();
+            
+            // 현재 세션의 LastUpdated 갱신
+            var currentSession = Sessions.First(x => x.Id == CurrentSessionId);
+            currentSession.LastUpdated = DateTime.Now;
+            
             await SaveSessions();
             await JS.InvokeVoidAsync("localStorage.setItem", "LAST_MODEL", model);
             
@@ -362,7 +445,7 @@
     {
         var sid = Guid.NewGuid();
         var chat = new List<ChatMessage> { new(ChatRole.System, SystemMessage) };
-        var s = new Session { Id = sid, Title = "새 대화", History = chat };
+        var s = new Session { Id = sid, Title = "새 대화", History = chat, LastUpdated = DateTime.Now, SystemMessage = SystemMessage };
         Sessions.Insert(0, s);
         SwitchSession(sid);
         _ = SaveSessions();
@@ -373,6 +456,12 @@
         var s = Sessions.First(x => x.Id == id);
         CurrentSessionId = id;
         Messages = s.History;
+        
+        // 세션의 시스템 메시지로 UI 업데이트 (저장은 하지 않음)
+        if (!string.IsNullOrEmpty(s.SystemMessage))
+        {
+            SystemMessage = s.SystemMessage;
+        }
     }
 
     async Task DeleteSession(Guid id)
@@ -412,7 +501,8 @@
         {
             Id = s.Id,
             Title = s.Title,
-            History = s.History.Select(m => new MessageDto { Role = RoleToString(m.Role), Text = m.Text ?? string.Empty }).ToList()
+            History = s.History.Select(m => new MessageDto { Role = RoleToString(m.Role), Text = m.Text ?? string.Empty }).ToList(),
+            LastUpdated = s.LastUpdated
         }).ToList();
         
         Console.WriteLine($"Attempting to save {dtos.Count} sessions to IndexedDB...");
@@ -438,6 +528,7 @@
         public Guid Id { get; set; } 
         public string Title { get; set; } = ""; 
         public List<MessageDto> History { get; set; } = new(); 
+        public DateTime LastUpdated { get; set; } = DateTime.Now;
     }
     
     class MessageDto 
@@ -546,7 +637,7 @@
                 // 현재 세션도 리셋
                 Sessions.Clear();
                 var sid = Guid.NewGuid();
-                Sessions.Add(new Session { Id = sid, Title = "새 대화", History = new(new List<ChatMessage> { new(ChatRole.System, SystemMessage) }) });
+                Sessions.Add(new Session { Id = sid, Title = "새 대화", History = new(new List<ChatMessage> { new(ChatRole.System, SystemMessage) }), SystemMessage = SystemMessage });
                 CurrentSessionId = Sessions[0].Id;
                 Messages = Sessions[0].History;
                 StateHasChanged();
@@ -573,6 +664,11 @@
     async Task SaveSystemMessage()
     {
         await JS.InvokeVoidAsync("localStorage.setItem", "SYSTEM_MESSAGE", SystemMessage ?? string.Empty);
+        
+        // 현재 세션의 시스템 메시지도 업데이트
+        var session = Sessions.First(x => x.Id == CurrentSessionId);
+        session.SystemMessage = SystemMessage ?? string.Empty;
+        
         // 현재 세션의 첫 번째 메시지(시스템 메시지) 업데이트
         var systemMsg = Messages.FirstOrDefault(m => m.Role == ChatRole.System);
         if (systemMsg != null)
@@ -585,6 +681,11 @@
             // 시스템 메시지가 없으면 추가
             Messages.Insert(0, new ChatMessage(ChatRole.System, SystemMessage));
         }
+        
+        // 현재 세션의 LastUpdated 갱신
+        var currentSession = Sessions.First(x => x.Id == CurrentSessionId);
+        currentSession.LastUpdated = DateTime.Now;
+        
         await SaveSessions();
     }
 
@@ -608,15 +709,21 @@
         {
             Messages[index] = new ChatMessage(Messages[index].Role, EditingText);
             
-            // 시스템 메시지를 편집한 경우, SystemMessage 변수도 업데이트
+            // 시스템 메시지를 편집한 경우, 현재 세션의 SystemMessage도 업데이트 (전역 설정은 업데이트하지 않음)
             if (Messages[index].Role == ChatRole.System)
             {
                 SystemMessage = EditingText;
-                await JS.InvokeVoidAsync("localStorage.setItem", "SYSTEM_MESSAGE", SystemMessage);
+                var session = Sessions.First(x => x.Id == CurrentSessionId);
+                session.SystemMessage = EditingText;
             }
             
             EditingMessageIndex = null;
             EditingText = string.Empty;
+            
+            // 현재 세션의 LastUpdated 갱신
+            var currentSession = Sessions.First(x => x.Id == CurrentSessionId);
+            currentSession.LastUpdated = DateTime.Now;
+            
             await SaveSessions();
         }
     }
@@ -629,12 +736,16 @@
 
     async Task DeleteMessage(int index)
     {
-        // 시스템 메시지는 삭제하지 않고 기본값으로 재설정
+        // 시스템 메시지는 삭제하지 않고 현재 세션의 시스템 메시지를 기본값으로 재설정
         if (Messages[index].Role == ChatRole.System)
         {
-            Messages[index] = new ChatMessage(ChatRole.System, "You are a helpful assistant.");
-            SystemMessage = "You are a helpful assistant.";
-            await JS.InvokeVoidAsync("localStorage.setItem", "SYSTEM_MESSAGE", SystemMessage);
+            var defaultSystemMessage = "You are a helpful assistant.";
+            Messages[index] = new ChatMessage(ChatRole.System, defaultSystemMessage);
+            SystemMessage = defaultSystemMessage;
+            
+            // 현재 세션의 시스템 메시지도 기본값으로 재설정
+            var session = Sessions.First(x => x.Id == CurrentSessionId);
+            session.SystemMessage = defaultSystemMessage;
             
             // 편집 중이었다면 편집 상태 해제
             if (EditingMessageIndex == index)
@@ -642,6 +753,10 @@
                 EditingMessageIndex = null;
                 EditingText = string.Empty;
             }
+            
+            // 현재 세션의 LastUpdated 갱신
+            var sessionToUpdate = Sessions.First(x => x.Id == CurrentSessionId);
+            sessionToUpdate.LastUpdated = DateTime.Now;
             
             await SaveSessions();
             return;
@@ -660,6 +775,10 @@
             // 편집 중인 메시지가 삭제된 메시지보다 뒤에 있다면 인덱스 조정
             EditingMessageIndex--;
         }
+        
+        // 현재 세션의 LastUpdated 갱신
+        var sessionForUpdate = Sessions.First(x => x.Id == CurrentSessionId);
+        sessionForUpdate.LastUpdated = DateTime.Now;
         
         await SaveSessions();
     }

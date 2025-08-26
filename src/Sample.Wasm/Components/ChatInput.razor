@@ -2,11 +2,23 @@
 
 <div class="composer container-fluid py-2">
     <div class="input-section d-flex flex-column gap-2">
-        <textarea @bind="UserInput" class="form-control" style="min-height: 90px" placeholder="메시지를 입력하세요" @onkeydown="HandleKeyDown"></textarea>
+        <textarea @bind="UserInput" @bind:event="oninput" @bind:after="OnUserInputChanged" class="form-control" style="min-height: 90px" placeholder="메시지를 입력하세요" @onkeydown="HandleKeyDown"></textarea>
+        
+        <!-- Temperature Slider -->
+        <div class="temperature-slider d-flex align-items-center gap-3">
+            <label class="form-label text-nowrap mb-0" for="temperature-range">
+                <i class="oi oi-dial me-1" style="font-size: 0.8rem;"></i>온도
+            </label>
+            <input type="range" id="temperature-range" class="form-range flex-grow-1" min="0" max="2" step="0.1" 
+                   @bind="Temperature" @bind:event="oninput" @bind:after="OnTemperatureChanged" 
+                   aria-label="AI 응답의 창의성을 조절하는 온도 설정. 0에 가까울수록 일관된 답변, 2에 가까울수록 창의적인 답변"
+                   title="@GetTemperatureDescription(Temperature)" />
+            <span class="temperature-value" title="현재 온도: @Temperature.ToString("F1")">@Temperature.ToString("F1")</span>
+        </div>
         
         <!-- Controls Row with Model Selection -->
         <div class="controls-row d-flex align-items-center gap-2">
-            <button class="btn @(IsSending ? "btn-danger" : "btn-primary")" disabled="@(!IsSending && (string.IsNullOrWhiteSpace(UserInput) || string.IsNullOrWhiteSpace(EffectiveModel)))" @onclick="OnSendOrCancel">
+            <button class="btn @(IsSending ? "btn-danger" : "btn-primary")" disabled="@(!IsSending && string.IsNullOrWhiteSpace(UserInput))" @onclick="HandleSendClick">
                 @if (IsSending)
                 {
                     <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
@@ -22,7 +34,7 @@
             <div class="model-selection-container">
                 @if (AvailableModels?.Length > 0)
                 {
-                    <select class="form-select form-select-sm" @bind="SelectedModel">
+                    <select class="form-select form-select-sm" @bind="SelectedModel" @bind:event="onchange">
                         @foreach (var m in AvailableModels)
                         {
                             <option value="@m">@m</option>
@@ -31,7 +43,7 @@
                 }
                 else
                 {
-                    <input class="form-control form-control-sm" placeholder="모델 ID 직접 입력" @bind="SelectedModel" />
+                    <input class="form-control form-control-sm" placeholder="모델 ID 직접 입력" @bind="SelectedModel" @bind:event="oninput" />
                 }
             </div>
             
@@ -53,6 +65,8 @@
 @code {
     [Parameter] public string UserInput { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> UserInputChanged { get; set; }
+    [Parameter] public double Temperature { get; set; } = 1.5;
+    [Parameter] public EventCallback<double> TemperatureChanged { get; set; }
     [Parameter] public string[] AvailableModels { get; set; } = Array.Empty<string>();
     [Parameter] public string SelectedModel { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> SelectedModelChanged { get; set; }
@@ -66,21 +80,72 @@
     [Parameter] public EventCallback OnModelChanged { get; set; }
     [Parameter] public EventCallback OnRefreshUsage { get; set; }
 
+    async Task HandleSendClick()
+    {
+        Console.WriteLine($"=== ChatInput HandleSendClick ===");
+        Console.WriteLine($"UserInput: '{UserInput}'");
+        Console.WriteLine($"IsSending: {IsSending}");
+        Console.WriteLine($"OnSendOrCancel.HasDelegate: {OnSendOrCancel.HasDelegate}");
+        
+        if (OnSendOrCancel.HasDelegate)
+        {
+            Console.WriteLine("Invoking OnSendOrCancel callback");
+            await OnSendOrCancel.InvokeAsync();
+        }
+        else
+        {
+            Console.WriteLine("OnSendOrCancel has no delegate!");
+        }
+    }
+
+    async Task OnUserInputChanged()
+    {
+        Console.WriteLine($"=== ChatInput OnUserInputChanged ===");
+        Console.WriteLine($"UserInput: '{UserInput}'");
+        
+        if (UserInputChanged.HasDelegate)
+        {
+            Console.WriteLine("Invoking UserInputChanged callback");
+            await UserInputChanged.InvokeAsync(UserInput);
+        }
+        else
+        {
+            Console.WriteLine("UserInputChanged has no delegate!");
+        }
+    }
+
+    async Task OnTemperatureChanged()
+    {
+        Console.WriteLine($"=== ChatInput OnTemperatureChanged ===");
+        Console.WriteLine($"Temperature: {Temperature}");
+        
+        if (TemperatureChanged.HasDelegate)
+        {
+            Console.WriteLine("Invoking TemperatureChanged callback");
+            await TemperatureChanged.InvokeAsync(Temperature);
+        }
+        else
+        {
+            Console.WriteLine("TemperatureChanged has no delegate!");
+        }
+    }
+
+    string GetTemperatureDescription(double temperature)
+    {
+        return temperature switch
+        {
+            <= 0.3 => "매우 일관적인 답변 (창의성 낮음)",
+            <= 0.7 => "일관된 답변 (균형 잡힌 창의성)",
+            <= 1.0 => "적당한 창의성 (권장)",
+            <= 1.5 => "창의적인 답변 (다양성 증가)",
+            <= 1.8 => "매우 창의적인 답변 (예측 어려움)",
+            _ => "극도로 창의적인 답변 (불안정할 수 있음)"
+        };
+    }
+
     Task HandleKeyDown(KeyboardEventArgs e)
     {
         // 모바일에서는 Enter가 줄바꿈, 전송은 버튼으로만
         return Task.CompletedTask;
-    }
-
-    private async Task OnUserInputChanged(string value)
-    {
-        UserInput = value;
-        await UserInputChanged.InvokeAsync(value);
-    }
-
-    private async Task OnSelectedModelChanged(string value)
-    {
-        SelectedModel = value;
-        await SelectedModelChanged.InvokeAsync(value);
     }
 }

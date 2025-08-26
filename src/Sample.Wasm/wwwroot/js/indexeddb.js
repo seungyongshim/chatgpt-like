@@ -38,6 +38,7 @@ class ChatStorage {
                     const sessionStore = db.createObjectStore('sessions', { keyPath: 'id' });
                     sessionStore.createIndex('title', 'title', { unique: false });
                     sessionStore.createIndex('createdAt', 'createdAt', { unique: false });
+                    sessionStore.createIndex('lastUpdated', 'lastUpdated', { unique: false });
                 }
                 
                 // 설정 스토어 생성
@@ -71,6 +72,7 @@ class ChatStorage {
                 id: session.Id || session.id,
                 title: session.Title || session.title,
                 history: session.History || session.history,
+                lastUpdated: session.LastUpdated || session.lastUpdated || new Date().toISOString(),
                 createdAt: new Date().toISOString()
             };
             console.log('Saving session to IndexedDB:', sessionData);
@@ -112,7 +114,8 @@ class ChatStorage {
                 const sessions = request.result.map(session => ({
                     Id: session.id,
                     Title: session.title,
-                    History: session.history
+                    History: session.history,
+                    LastUpdated: session.lastUpdated ? new Date(session.lastUpdated) : new Date()
                 }));
                 console.log('Loaded sessions from IndexedDB:', sessions);
                 resolve(sessions);
