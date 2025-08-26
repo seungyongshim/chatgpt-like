@@ -329,30 +329,116 @@ window.clearIndexedDB = async () => {
     }
 };
 
-// 채팅 컨테이너를 맨 아래로 스크롤
+// 자동 스크롤 상태 관리
+window.autoScrollEnabled = true;
+window.isUserScrolling = false;
+
+// 사용자가 수동으로 스크롤했는지 감지 (전체 페이지 스크롤용)
+window.setupScrollDetection = () => {
+    let scrollTimeout;
+    
+    window.addEventListener('scroll', () => {
+        // 사용자가 스크롤 중임을 표시
+        window.isUserScrolling = true;
+        
+        // 스크롤이 멈춘 후 1초 뒤에 상태 초기화
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            window.isUserScrolling = false;
+            
+            // 맨 아래 근처에 있으면 자동 스크롤 재활성화
+            const inputHeight = 140;
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const windowHeight = window.innerHeight;
+            const documentHeight = Math.max(
+                document.body.scrollHeight,
+                document.body.offsetHeight,
+                document.documentElement.clientHeight,
+                document.documentElement.scrollHeight,
+                document.documentElement.offsetHeight
+            );
+            
+            const isNearBottom = scrollTop + windowHeight >= documentHeight - inputHeight - 100;
+            window.autoScrollEnabled = isNearBottom;
+            
+            console.log(`Auto scroll enabled: ${window.autoScrollEnabled}, scroll: ${scrollTop}, near bottom: ${isNearBottom}`);
+        }, 1000);
+    });
+    
+    console.log('Page scroll detection setup complete');
+};
+
+// 자동 스크롤이 활성화된 경우에만 스크롤
+window.scrollToBottomIfEnabled = () => {
+    if (window.autoScrollEnabled && !window.isUserScrolling) {
+        window.scrollToBottom();
+    } else {
+        console.log('Auto scroll skipped - user is scrolling or disabled');
+    }
+};
+
+// 전체 페이지를 맨 아래로 스크롤 (ChatGPT 스타일)
 window.scrollToBottom = () => {
     try {
-        const chatContainer = document.querySelector('.chat-container');
-        if (chatContainer) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            console.log('Scrolled to bottom');
-        }
+        // 전체 페이지 스크롤 사용
+        const documentHeight = Math.max(
+            document.body.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.clientHeight,
+            document.documentElement.scrollHeight,
+            document.documentElement.offsetHeight
+        );
+        
+        // 입력창 높이를 고려한 스크롤 (약간의 여유 공간 포함)
+        const inputHeight = 140; // 입력창 높이 + 여유 공간
+        const targetScroll = documentHeight - window.innerHeight + inputHeight;
+        
+        console.log(`Document height: ${documentHeight}, Window height: ${window.innerHeight}, Target scroll: ${targetScroll}`);
+        
+        // 즉시 스크롤
+        window.scrollTo(0, targetScroll);
+        
+        // 약간의 지연 후 다시 한 번 스크롤 (DOM 업데이트 대응)
+        setTimeout(() => {
+            const newDocumentHeight = Math.max(
+                document.body.scrollHeight,
+                document.body.offsetHeight,
+                document.documentElement.clientHeight,
+                document.documentElement.scrollHeight,
+                document.documentElement.offsetHeight
+            );
+            const newTargetScroll = newDocumentHeight - window.innerHeight + inputHeight;
+            window.scrollTo(0, newTargetScroll);
+            console.log(`Final scroll position: ${window.pageYOffset}`);
+        }, 10);
+        
+        console.log('Successfully scrolled to bottom (page scroll)');
     } catch (error) {
         console.error('Error scrolling to bottom:', error);
     }
 };
 
-// 부드럽게 맨 아래로 스크롤
+// 전체 페이지를 부드럽게 맨 아래로 스크롤
 window.smoothScrollToBottom = () => {
     try {
-        const chatContainer = document.querySelector('.chat-container');
-        if (chatContainer) {
-            chatContainer.scrollTo({
-                top: chatContainer.scrollHeight,
-                behavior: 'smooth'
-            });
-            console.log('Smooth scrolled to bottom');
-        }
+        const documentHeight = Math.max(
+            document.body.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.clientHeight,
+            document.documentElement.scrollHeight,
+            document.documentElement.offsetHeight
+        );
+        
+        // 입력창 높이를 고려한 스크롤
+        const inputHeight = 140;
+        const targetScroll = documentHeight - window.innerHeight + inputHeight;
+        
+        window.scrollTo({
+            top: targetScroll,
+            behavior: 'smooth'
+        });
+        
+        console.log('Smooth scrolled to bottom (page scroll)');
     } catch (error) {
         console.error('Error smooth scrolling to bottom:', error);
     }

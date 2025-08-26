@@ -3,21 +3,22 @@
 .chat-layout { 
     display: grid; 
     grid-template-columns: 260px 1fr; 
-    /* 기본 100vh, 지원하면 100dvh, 마지막으로 JS가 주입하는 실측 높이 사용 */
-    height: 100vh; 
-    height: 100dvh; 
-    height: var(--app-vh, 100dvh);
+    min-height: 100vh; 
+    min-height: 100dvh; 
+    min-height: var(--app-vh, 100dvh);
     position: relative; 
     background-color: var(--bg-primary);
     color: var(--text-primary);
 }
 
 .chat-main { 
-    display: grid; 
-    grid-template-rows: 1fr auto; 
-    height: 100%; 
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
     background-color: var(--bg-primary);
     position: relative;
+    /* 하단 고정 입력창을 위한 여백 - 조금 더 넉넉하게 */
+    padding-bottom: 140px; /* 입력창 높이 + 여유 공간 */
 }
 
 .chat-container { 
@@ -25,15 +26,15 @@
     display: flex; 
     flex-direction: column; 
     gap: .5rem; 
-    overflow-y: auto;
-    overflow-x: hidden;
+    /* 스크롤 제거 - 전체 페이지 스크롤 사용 */
+    overflow: visible;
     margin-bottom: 0;
-    padding-bottom: 2rem; /* 입력 영역을 고려한 적정 여백 */
+    /* 하단 패딩을 좀 더 넉넉하게 */
+    padding-bottom: 3rem;
     background-color: var(--bg-primary);
-    /* Grid 레이아웃이 자동으로 높이를 계산하도록 함 */
-    height: 100%; /* 부모 grid에서 남은 공간을 모두 차지 */
-    /* 부드러운 스크롤 효과 */
-    scroll-behavior: smooth;
+    /* 자동 높이로 변경 */
+    min-height: calc(100vh - 140px);
+    flex: 1;
 }
 
 /* Theme Toggle Button */
@@ -79,6 +80,12 @@
     
     .chat-main {
         padding-top: 60px; /* 모바일 헤더 높이만큼 */
+        /* 모바일에서도 하단 입력창을 위한 여백 */
+        padding-bottom: 160px; /* 모바일에서는 조금 더 여백 */
+    }
+    
+    .chat-container {
+        min-height: calc(100vh - 220px); /* 모바일 헤더 + 입력창 고려 */
     }
     
     .theme-toggle {
@@ -90,5 +97,12 @@
     
     .theme-toggle i {
         font-size: 1rem;
+    }
+}
+
+/* 데스크톱에서 입력창이 사이드바를 고려하도록 */
+@media (min-width: 992px) {
+    .composer {
+        left: 260px; /* 사이드바 너비만큼 */
     }
 }

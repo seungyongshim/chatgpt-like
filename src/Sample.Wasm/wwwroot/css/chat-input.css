@@ -6,10 +6,12 @@
     background: var(--bg-primary);
     /* 안전영역 고려하되 과도하지 않게 */
     padding-bottom: calc(.75rem + env(safe-area-inset-bottom, 12px));
-    /* 하단에 고정되도록 보장 */
-    position: sticky;
+    /* 하단에 완전히 고정 - ChatGPT 스타일 */
+    position: fixed;
     bottom: 0;
-    z-index: 100;
+    left: 0;
+    right: 0;
+    z-index: 1000;
     /* 그림자로 입력 영역을 구분 */
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
@@ -472,10 +474,12 @@
 @media (max-width: 991.98px) {
     .composer {
         padding-bottom: calc(1rem + env(safe-area-inset-bottom, 12px));
-        /* 모바일에서도 확실히 하단 고정 */
-        position: sticky;
+        /* 모바일에서도 완전히 하단 고정 */
+        position: fixed;
         bottom: 0;
-        z-index: 100;
+        left: 0;
+        right: 0;
+        z-index: 1000;
         /* 모바일에서 더 강한 그림자 */
         box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
     }

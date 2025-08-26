@@ -367,7 +367,8 @@
             StateHasChanged(); // 사용자 메시지 추가 후 즉시 UI 업데이트
             Console.WriteLine("StateHasChanged called");
             
-            // 사용자 메시지 추가 후 스크롤
+            // 사용자 메시지 추가 후 스크롤 (DOM 업데이트 대기)
+            await Task.Delay(10);
             await JS.InvokeVoidAsync("scrollToBottom");
         }
         else
@@ -406,9 +407,16 @@
                     responseBuilder.Append(chunk);
                     Messages[assistantIndex] = new ChatMessage(ChatRole.Assistant, responseBuilder.ToString());
                     StateHasChanged();
+                    
+                    // 스트리밍 중에도 주기적으로 스크롤 (매 청크마다는 너무 자주이므로 적당히 조절)
+                    if (responseBuilder.Length % 50 == 0) // 50자마다 스크롤
+                    {
+                        await JS.InvokeVoidAsync("scrollToBottom");
+                    }
                 }
                 
-                // 어시스턴트 응답 완료 후 스크롤
+                // 어시스턴트 응답 완료 후 스크롤 (DOM 업데이트 대기)
+                await Task.Delay(10);
                 await JS.InvokeVoidAsync("scrollToBottom");
             }
             catch (OperationCanceledException)
@@ -734,6 +742,10 @@
             currentSession.LastUpdated = DateTime.Now;
             
             await SaveSessions();
+            
+            // 메시지 편집 후 스크롤
+            await Task.Delay(10);
+            await JS.InvokeVoidAsync("scrollToBottom");
         }
     }
 
@@ -768,6 +780,10 @@
             sessionToUpdate.LastUpdated = DateTime.Now;
             
             await SaveSessions();
+            
+            // 메시지 삭제 후 스크롤
+            await Task.Delay(10);
+            await JS.InvokeVoidAsync("scrollToBottom");
             return;
         }
         
@@ -790,6 +806,10 @@
         sessionForUpdate.LastUpdated = DateTime.Now;
         
         await SaveSessions();
+        
+        // 메시지 삭제 후 스크롤
+        await Task.Delay(10);
+        await JS.InvokeVoidAsync("scrollToBottom");
     }
 
     void ToggleMobileHistory()
@@ -906,8 +926,17 @@
     {
         if (firstRender)
         {
-            // 페이지 첫 로드 시 맨 아래로 스크롤
+            // 스크롤 감지 설정
+            await JS.InvokeVoidAsync("setupScrollDetection");
+            
+            // 페이지 첫 로드 시 맨 아래로 스크롤 (약간의 지연 후)
+            await Task.Delay(100);
             await JS.InvokeVoidAsync("scrollToBottom");
+        }
+        else
+        {
+            // 렌더링 후 스크롤 위치가 변경되었을 수 있으므로 필요시 스크롤 유지
+            // 단, 사용자가 수동으로 스크롤한 경우는 제외하기 위해 조건부로 실행
         }
     }
 }
