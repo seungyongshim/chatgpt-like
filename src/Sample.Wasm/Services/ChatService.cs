@@ -105,7 +105,7 @@ public class ChatService : IChatService
         {
             ["model"] = model,
             ["messages"] = messages,
-            ["temperature"] = temperature ?? 0.2,
+            ["temperature"] = temperature ?? 1.0,
             ["stream"] = true
         };
         if (maxTokens.HasValue)

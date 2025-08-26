@@ -17,6 +17,7 @@
     grid-template-rows: 1fr auto; 
     height: 100%; 
     background-color: var(--bg-primary);
+    position: relative;
 }
 
 .chat-container { 
@@ -24,10 +25,12 @@
     display: flex; 
     flex-direction: column; 
     gap: .5rem; 
-    overflow: auto; 
-    margin-bottom: 1rem;
-    padding-bottom: 96px; /* 입력 영역을 고려한 적정 여백 */
+    overflow: hidden;
+    margin-bottom: 0;
+    padding-bottom: 2rem; /* 입력 영역을 고려한 적정 여백 */
     background-color: var(--bg-primary);
+    /* 채팅 컨테이너가 입력 영역에 겹치지 않도록 */
+    max-height: calc(100% - 200px); /* 입력 영역 높이만큼 여유 확보 */
 }
 
 /* Theme Toggle Button */

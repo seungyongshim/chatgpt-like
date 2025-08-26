@@ -119,20 +119,23 @@
         Console.WriteLine($"UserInput updated to: '{UserInput}'");
     }
 
-    void OnTemperatureChanged(double value)
+    async Task OnTemperatureChanged(double value)
     {
         Console.WriteLine($"=== Index OnTemperatureChanged ===");
         Console.WriteLine($"Old Temperature: {Temperature}");
         Console.WriteLine($"New Temperature: {value}");
         Temperature = value;
         Console.WriteLine($"Temperature updated to: {Temperature}");
+        
+        // 온도 변경 시 자동으로 모델 설정 저장
+        await SaveModelSettings();
     }
 
     List<Session> Sessions { get; set; } = new();
     Guid CurrentSessionId { get; set; }
     string SelectedModel { get; set; } = string.Empty;
     string[] AvailableModels = Array.Empty<string>();
-    double Temperature { get; set; } = 1.5;
+    double Temperature { get; set; } = 1.0;
     int? MaxTokens { get; set; }
     string EffectiveModel => string.IsNullOrWhiteSpace(SelectedModel)
         ? (AvailableModels.Length > 0 ? AvailableModels[0] : "gpt-4o")
@@ -555,7 +558,7 @@
                 var cfg = System.Text.Json.JsonSerializer.Deserialize<ModelSettings>(json);
                 if (cfg is not null)
                 {
-                    Temperature = cfg.Temperature ?? 1.5;
+                    Temperature = cfg.Temperature ?? 1.0;
                     MaxTokens = cfg.MaxTokens;
                 }
             }
@@ -563,7 +566,7 @@
         }
         else
         {
-            Temperature = 1.5;
+            Temperature = 1.0;
             MaxTokens = null;
         }
         StateHasChanged();
