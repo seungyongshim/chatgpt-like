@@ -9,14 +9,14 @@ const ChatInput = () => {
   const temperature = useChatStore(state => state.temperature);
   const availableModels = useChatStore(state => state.availableModels);
   const selectedModel = useChatStore(state => state.selectedModel);
-  
+
   const setUserInput = useChatStore(state => state.setUserInput);
   const sendMessage = useChatStore(state => state.sendMessage);
   const setSelectedModel = useChatStore(state => state.setSelectedModel);
   const setTemperature = useChatStore(state => state.setTemperature);
   const toggleSettingsOverlay = useChatStore(state => state.toggleSettingsOverlay);
   const getEffectiveModel = useChatStore(state => state.getEffectiveModel);
-  
+
   const [localInput, setLocalInput] = useState('');
   const [cancellationController, setCancellationController] = useState<AbortController | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -66,18 +66,18 @@ const ChatInput = () => {
     try {
       const controller = new AbortController();
       setCancellationController(controller);
-      
+
       await sendMessage(controller.signal);
-      
+
       setCancellationController(null);
-      
+
       // 포커스를 다시 텍스트 영역으로
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.focus();
         }
       }, 100);
-      
+
     } catch (error) {
       setCancellationController(null);
       console.error('Send message error:', error);
@@ -104,16 +104,16 @@ const ChatInput = () => {
           {error}
         </div>
       )}
-      
+
       <div className="chat-input-wrapper">
         <div className="input-controls">
           {/* 모델 선택 */}
           <div className="control-group">
             <label htmlFor="model-select">모델:</label>
             {availableModels.length > 0 ? (
-              <select 
+              <select
                 id="model-select"
-                value={selectedModel} 
+                value={selectedModel}
                 onChange={handleModelChange}
                 className="model-select"
               >
@@ -172,7 +172,7 @@ const ChatInput = () => {
             className="message-input"
             disabled={isSending}
           />
-          
+
           <button
             onClick={handleSendOrCancel}
             disabled={!localInput.trim() && !isSending}
