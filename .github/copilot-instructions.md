@@ -1,116 +1,65 @@
-# ChatGPT-like Blazor WebAssembly App - AI Coding Instructions
+# 이 프로젝트에 대하여
 
-## Architecture Overview
+이것은 React, TypeScript, Vite로 구축된 ChatGPT와 유사한 웹 애플리케이션입니다. 반응형 UI, 채팅 세션 관리 및 구성 가능한 AI 모델 설정을 제공합니다.
 
-This is a **Blazor WebAssembly chat application** that mimics ChatGPT functionality. The app runs entirely in the browser with:
+## 아키텍처
 
-- **Single Page Application**: Everything happens in `Pages/Index.razor` (~1500 lines)
-- **Local API Integration**: Connects to `http://localhost:4141` for OpenAI-compatible chat completions
-- **Dual Storage Strategy**: IndexedDB with localStorage fallback for chat sessions
-- **Mobile-First UI**: Responsive design with mobile sidebar navigation
+이 애플리케이션은 최신 프론트엔드 아키텍처를 따릅니다:
 
-## Key Components & Patterns
+-   **프레임워크:** 타입 안전성을 위해 TypeScript와 함께 React를 사용합니다.
+-   **상태 관리:** [Zustand](https://github.com/pmndrs/zustand)를 사용하여 전역 상태를 관리합니다. 전체 애플리케이션 상태는 `src/stores/chatStore.ts`에 중앙 집중화되어 있습니다. 이것이 UI 상태, 채팅 기록 및 설정의 단일 소스입니다. 대부분의 변경 사항은 이 저장소를 수정하는 것을 포함합니다.
+-   **백엔드 통신:** 백엔드 AI 서비스와의 모든 상호 작용은 `src/services/chatService.ts`에서 처리됩니다. 이 서비스는 모델을 가져오고(`/v1/models`) 채팅 완료를 스트리밍(`/v1/chat/completions`)하기 위한 OpenAI 호환 API를 기대합니다.
+-   **컴포넌트 구조:** 컴포넌트는 `src/components` 아래 기능별로 구성됩니다.
+-   **스타일링:** 전역 스타일 및 컴포넌트별 스타일은 `src/styles/css`에 있습니다. 애플리케이션은 `<html>` 요소의 `data-theme` 속성에 의해 제어되고 `chatStore.ts`에서 관리되는 다크 및 라이트 테마를 지원합니다.
+-   **지속성:** 채팅 세션은 `StorageService`(IndexedDB 또는 유사한 브라우저 저장소를 사용할 가능성이 높음)를 사용하여 지속되며, 테마 및 모델 설정은 `localStorage`에 저장됩니다.
 
-### 1. Chat Service Architecture (`Services/ChatService.cs`)
-- **IChatService Interface**: `GetModelsAsync()`, `GetResponseAsync()`, `GetUsageAsync()`
-- **OpenAI API Compatibility**: Expects `/v1/models` and `/v1/chat/completions` endpoints
-- **Usage Tracking**: Parses `quota_snapshots.premium_interactions` structure
-- **Error Resilience**: Graceful fallbacks for model discovery
+## 개발자 워크플로우
 
-### 2. Data Persistence Strategy
-**Primary**: IndexedDB via JavaScript interop (`wwwroot/js/indexeddb.js`)
-```csharp
-// C# calls JavaScript functions
-await JS.InvokeVoidAsync("saveSessionsToIndexedDB", dtos);
-var sessions = await JS.InvokeAsync<List<SessionDto>>("loadSessionsFromIndexedDB");
-```
+### 전제 조건
 
-**Fallback**: localStorage for compatibility
-```csharp
-// Automatic fallback in SaveSessions() method
-var json = System.Text.Json.JsonSerializer.Serialize(dtos);
-await JS.InvokeVoidAsync("localStorage.setItem", "CHAT_SESSIONS", json);
-```
+애플리케이션은 OpenAI API와 호환되는 실행 중인 백엔드 서비스가 필요합니다. 기본적으로 `http://localhost:4141`에 연결합니다.
 
-### 3. Session Management Patterns
-- **Session Structure**: `Session { Guid Id, string Title, List<ChatMessage> History }`
-- **Auto-Title Generation**: Uses first 20 chars of first user message + "…"
-- **Minimum Session Rule**: Always keeps at least 1 session active
-- **System Message Handling**: Always first message, editable but not deletable
+### 시작하기
 
-### 4. State Management
-- **Component State**: All state lives in Index.razor component
-- **Settings Persistence**: Model settings stored per-model as `MODEL_SETTINGS::{modelName}`
-- **Theme Persistence**: Dark mode stored as `THEME_PREFERENCE` (light/dark)
+1.  **의존성 설치:**
+    ```bash
+    npm install
+    ```
+2.  **개발 서버 실행:**
+    ```bash
+    npm run dev
+    ```
+    애플리케이션은 `http://localhost:5173`에서 사용할 수 있습니다.
 
-## Development Workflows
+### 주요 스크립트
 
-### Build & Run
-```powershell
-cd "d:\2025\chatgpt-like\src\Sample.Wasm"
-dotnet build    # Builds the WebAssembly app
-dotnet run --project     # Starts dev server on http://localhost:5045
-```
+-   `npm run dev`: Vite 개발 서버를 시작합니다.
+-   `npm run build`: TypeScript를 컴파일하고 프로덕션을 위해 애플리케이션을 `dist` 디렉토리에 빌드합니다.
+-   `npm run lint`: ESLint를 사용하여 코드베이스를 린트합니다.
 
-### Infrastructure Setup
-- **Docker Compose**: Basic setup in `infrastructure/docker-compose.yml` 
-- **Target Framework**: .NET 9.0 with nullable reference types enabled
-- **HttpClient Timeout**: 30-minute timeout for AI responses, configurable per operation
+## 핵심 개념 및 패턴
 
-### CSS Architecture
-- **CSS Variables**: Theme system using `--bg-primary`, `--text-primary`, etc.
-- **Dark Mode**: Toggle via `data-theme="dark"` attribute on `<html>`
-- **Mobile Breakpoint**: `@media (max-width: 768px)` for responsive behavior
+### Zustand를 사용한 상태 관리
 
-### Dependencies & External Services
-- **Microsoft.Extensions.AI**: For chat completions and model abstraction (.NET 9.0)
-- **Bootstrap 5.3.3**: UI components (loaded from CDN)
-- **Open Iconic**: Icon font for UI elements
-- **Local AI Service**: Must run on `localhost:4141` with OpenAI-compatible endpoints
-- **Anthropic Beta Headers**: Automatically added for enhanced API compatibility
+-   **저장소:** `src/stores/chatStore.ts`는 애플리케이션의 로직을 이해하는 데 가장 중요한 파일입니다. 채팅 세션, 메시지, 모델 설정 및 UI 토글을 관리하기 위한 상태와 작업을 포함합니다.
+-   **상태 접근:** React 컴포넌트에서 `useChatStore` 훅을 사용하여 상태와 작업에 접근합니다.
+    ```tsx
+    // 컴포넌트 예시
+    import { useChatStore } from '../stores/chatStore';
 
-## Critical Implementation Details
+    const messages = useChatStore(state => state.messages);
+    const sendMessage = useChatStore(state => state.sendMessage);
+    ```
+-   **상태 수정:** 저장소 내의 작업은 상태를 수정하는 데 사용됩니다. 이러한 작업은 종종 비동기적이며 `chatService` 또는 `storageService`와 같은 서비스와 상호 작용합니다.
 
-### Message Editing System
-- **Inline Editing**: Click any message to edit in-place
-- **System Message Special Case**: Editable but resets to default instead of deleting
-- **Auto-resize Textareas**: JavaScript interop for dynamic height adjustment
-- **Message Regeneration**: Resend user messages to get new AI responses
+### 서비스 계층
 
-### Mobile UI Patterns
-- **Sidebar Navigation**: Transforms to overlay on mobile
-- **Safe Area Handling**: Uses `env(safe-area-inset-bottom)` for iOS
-- **Touch-Friendly**: Larger touch targets and gesture-based interactions
+-   `src/services/chatService.ts`의 `ChatService`는 모든 API 호출을 추상화합니다.
+-   핵심 기능인 채팅 메시지에 대한 스트리밍 응답을 처리합니다. `getResponseStreaming` 비동기 생성기는 이 기능의 핵심입니다.
+-   새로운 백엔드 상호 작용을 추가하려면 이 서비스를 확장하십시오.
 
-### JavaScript Interop Functions
-Key functions exposed to C#:
-- `initializeIndexedDB()`: Initialize storage database
-- `saveSessionsToIndexedDB(sessions)`: Persist chat data with C# property conversion
-- `loadSessionsFromIndexedDB()`: Retrieve sessions with proper case conversion
-- `copyToClipboard(text)`: Cross-browser clipboard with fallback
-- `autoResizeTextarea(elementId)`: Dynamic textarea sizing
-- `testIndexedDB()`: Debug function to verify storage operations
-- `clearIndexedDB()`: Development helper to reset all data
+### 세션 및 메시지 관리
 
-## Troubleshooting & Debugging
-
-### Common Issues
-- **IndexedDB Failures**: App automatically falls back to localStorage
-- **API Connection**: Check `http://localhost:4141` availability in DevTools
-- **Theme Persistence**: Stored in localStorage as `THEME_PREFERENCE`
-- **Model Loading**: Falls back to manual input if model list API fails
-
-### Development Tools
-- **Browser DevTools**: IndexedDB inspection in Application tab
-- **Console Logging**: Extensive logging for session saves/loads
-- **Settings Panel**: Built-in connection testing and data clearing tools
-
-## Project-Specific Conventions
-
-- **C# Property Naming**: Use PascalCase for DTOs (Id, Title, History)
-- **JavaScript Interop**: Convert to camelCase for JavaScript consumption
-- **Error Handling**: Prefer graceful degradation over exceptions
-- **Responsive Design**: Mobile-first approach with desktop enhancements
-- **Korean UI**: Interface text is primarily in Korean
-
-When modifying this codebase, always test both desktop and mobile layouts, ensure IndexedDB operations have localStorage fallbacks, and verify the local API service is running for full functionality.
+-   `Session` 객체(`src/services/types.ts`)는 단일 채팅 대화를 나타냅니다.
+-   `chatStore`는 세션 목록과 현재 활성 세션을 관리합니다.
+-   세션 내의 메시지는 `ChatMessage` 객체의 배열입니다. 첫 번째 메시지는 항상 `system` 메시지입니다.
