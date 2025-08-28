@@ -226,7 +226,9 @@
             padding: spacing(1);
         }
     }
-}// Main input area
+}
+
+// Main input area
 .input-area {
     display: flex;
     gap: spacing(3);
@@ -305,7 +307,7 @@
     &.resizing {
         background-color: var(--btn-primary-bg);
         border-color: var(--btn-primary-bg);
-        
+
         .resize-indicator span {
             background-color: white;
         }
@@ -315,7 +317,7 @@
         display: flex;
         flex-direction: column;
         gap: 1px;
-        
+
         span {
             width: 20px;
             height: 1px;
@@ -327,7 +329,7 @@
 
     @include media-breakpoint-down(sm) {
         height: 14px;
-        
+
         .resize-indicator span {
             width: 16px;
             height: 1.5px;
@@ -390,7 +392,7 @@
 
     i {
         font-size: 1.2rem;
-        
+
         @include media-breakpoint-down(sm) {
             font-size: 1rem;
         }
@@ -417,7 +419,7 @@
             background: transparent;
             border: none;
             margin: 0;
-            
+
             @include media-breakpoint-down(sm) {
                 font-size: 0.6rem;
             }

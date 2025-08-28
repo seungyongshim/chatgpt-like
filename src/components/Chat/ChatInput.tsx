@@ -41,7 +41,7 @@ const ChatInput = () => {
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsResizing(true);
-    
+
     const startY = e.clientY;
     const startHeight = textareaHeight;
 
@@ -49,7 +49,7 @@ const ChatInput = () => {
       const deltaY = e.clientY - startY;
       const newHeight = Math.min(400, Math.max(60, startHeight + deltaY));
       setTextareaHeight(newHeight);
-      
+
       if (textareaRef.current) {
         textareaRef.current.style.height = newHeight + 'px';
       }
@@ -185,7 +185,7 @@ const ChatInput = () => {
               disabled={isSending}
               style={{ height: `${textareaHeight}px` }}
             />
-            <div 
+            <div
               ref={resizeRef}
               className={`resize-handle ${isResizing ? 'resizing' : ''}`}
               onMouseDown={handleMouseDown}
