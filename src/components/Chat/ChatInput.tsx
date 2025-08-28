@@ -17,23 +17,57 @@ const ChatInput = () => {
 
   const [localInput, setLocalInput] = useState('');
   const [cancellationController, setCancellationController] = useState<AbortController | null>(null);
+  const [textareaHeight, setTextareaHeight] = useState(60);
+  const [isResizing, setIsResizing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const resizeRef = useRef<HTMLDivElement>(null);
 
   // userInput 변경 시 로컬 상태도 업데이트
   useEffect(() => {
     setLocalInput(userInput);
   }, [userInput]);
 
+  // 자동 높이 조절 기능 (최소 높이를 현재 설정된 높이로)
   const autoResize = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = Math.min(200, Math.max(60, textareaRef.current.scrollHeight)) + 'px';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const newHeight = Math.min(300, Math.max(textareaHeight, scrollHeight));
+      textareaRef.current.style.height = newHeight + 'px';
     }
+  };
+
+  // 수동 리사이즈 기능
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    
+    const startY = e.clientY;
+    const startHeight = textareaHeight;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = e.clientY - startY;
+      const newHeight = Math.min(400, Math.max(60, startHeight + deltaY));
+      setTextareaHeight(newHeight);
+      
+      if (textareaRef.current) {
+        textareaRef.current.style.height = newHeight + 'px';
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
   useEffect(() => {
     autoResize();
-  }, [localInput]);
+  }, [localInput, textareaHeight]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -137,21 +171,33 @@ const ChatInput = () => {
             className="temperature-range"
           />
           <span className="temperature-value">{temperature.toFixed(1)}</span>
-
-          {/* 사용량 정보 */}
-          <UsageInfo />
         </div>
 
         <div className="input-area">
-          <textarea
-            ref={textareaRef}
-            value={localInput}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="메시지를 입력하세요... (Enter: 전송, Shift+Enter: 줄바꿈)"
-            className="message-input"
-            disabled={isSending}
-          />
+          <div className="textarea-container">
+            <textarea
+              ref={textareaRef}
+              value={localInput}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="메시지를 입력하세요... (Enter: 전송, Shift+Enter: 줄바꿈)"
+              className="message-input"
+              disabled={isSending}
+              style={{ height: `${textareaHeight}px` }}
+            />
+            <div 
+              ref={resizeRef}
+              className={`resize-handle ${isResizing ? 'resizing' : ''}`}
+              onMouseDown={handleMouseDown}
+              title="드래그하여 크기 조절"
+            >
+              <div className="resize-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
 
           <button
             onClick={handleSendOrCancel}
@@ -159,11 +205,14 @@ const ChatInput = () => {
             className={`send-btn ${isSending ? 'sending' : ''}`}
             title={isSending ? "전송 취소" : "메시지 전송"}
           >
-            {isSending ? (
-              <i className="oi oi-x"></i>
-            ) : (
-              <i className="oi oi-arrow-right"></i>
-            )}
+            <div className="send-btn-content">
+              {isSending ? (
+                <i className="oi oi-x"></i>
+              ) : (
+                <i className="oi oi-arrow-right"></i>
+              )}
+              <UsageInfo />
+            </div>
           </button>
         </div>
       </div>
