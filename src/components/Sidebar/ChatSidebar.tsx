@@ -38,7 +38,7 @@ const ChatSidebar = () => {
       </button>
 
       {/* 사이드바 */}
-      <aside className={`chat-sidebar ${showMobileHistory ? 'show-mobile' : ''}`}>
+      <aside className={`chat-sidebar ${showMobileHistory ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           <button className="new-chat-btn" onClick={handleNewChat}>
             <i className="oi oi-plus"></i>

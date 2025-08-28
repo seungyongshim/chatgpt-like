@@ -534,6 +534,18 @@ body {
         display: block !important;
     }
 
+    /* 모바일 오버레이 */
+    .mobile-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--overlay-bg);
+        z-index: 1040;
+        display: block;
+    }
+
     /* 모바일에서 입력창이 전체 너비를 차지하도록 */
     .chat-input-container {
         left: 0;
