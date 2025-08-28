@@ -14,8 +14,6 @@ const ChatInput = () => {
   const sendMessage = useChatStore(state => state.sendMessage);
   const setSelectedModel = useChatStore(state => state.setSelectedModel);
   const setTemperature = useChatStore(state => state.setTemperature);
-  const toggleSettingsOverlay = useChatStore(state => state.toggleSettingsOverlay);
-  const getEffectiveModel = useChatStore(state => state.getEffectiveModel);
 
   const [localInput, setLocalInput] = useState('');
   const [cancellationController, setCancellationController] = useState<AbortController | null>(null);
@@ -94,8 +92,6 @@ const ChatInput = () => {
     await setTemperature(temp);
   };
 
-  const effectiveModel = getEffectiveModel();
-
   return (
     <div className="chat-input-container">
       {error && (
@@ -108,55 +104,39 @@ const ChatInput = () => {
       <div className="chat-input-wrapper">
         <div className="input-controls">
           {/* 모델 선택 */}
-          <div className="control-group">
-            <label htmlFor="model-select">모델:</label>
-            {availableModels.length > 0 ? (
-              <select
-                id="model-select"
-                value={selectedModel}
-                onChange={handleModelChange}
-                className="model-select"
-              >
-                {availableModels.map(model => (
-                  <option key={model} value={model}>{model}</option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                placeholder="모델명을 입력하세요"
-                className="model-input"
-              />
-            )}
-            <span className="effective-model">사용 중: {effectiveModel}</span>
-          </div>
+          {availableModels.length > 0 ? (
+            <select
+              id="model-select"
+              value={selectedModel}
+              onChange={handleModelChange}
+              className="model-select"
+            >
+              {availableModels.map(model => (
+                <option key={model} value={model}>{model}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              placeholder="모델명을 입력하세요"
+              className="model-input"
+            />
+          )}
 
           {/* 온도 설정 */}
-          <div className="control-group">
-            <label htmlFor="temperature-range">온도:</label>
-            <input
-              id="temperature-range"
-              type="range"
-              min="0"
-              max="2"
-              step="0.1"
-              value={temperature}
-              onChange={handleTemperatureChange}
-              className="temperature-range"
-            />
-            <span className="temperature-value">{temperature.toFixed(1)}</span>
-          </div>
-
-          {/* 설정 버튼 */}
-          <button
-            className="settings-btn"
-            onClick={toggleSettingsOverlay}
-            title="설정"
-          >
-            <i className="oi oi-cog"></i>
-          </button>
+          <input
+            id="temperature-range"
+            type="range"
+            min="0"
+            max="2"
+            step="0.1"
+            value={temperature}
+            onChange={handleTemperatureChange}
+            className="temperature-range"
+          />
+          <span className="temperature-value">{temperature.toFixed(1)}</span>
 
           {/* 사용량 정보 */}
           <UsageInfo />

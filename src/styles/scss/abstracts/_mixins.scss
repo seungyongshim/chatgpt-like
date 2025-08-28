@@ -107,14 +107,16 @@
     transition: $transition-base;
 
     &:hover:not(:disabled) {
-
         // For CSS variables, we can't use darken(), so use filter instead
         @if str-index(inspect($bg-color), 'var(') {
             filter: brightness(0.9);
-        }
-
-        @else {
+        } @else {
             background-color: darken($bg-color, 5%);
+        }
+        
+        @if str-index(inspect($border), 'var(') {
+            // Don't modify CSS variable borders in hover
+        } @else {
             border-color: darken($border, 5%);
         }
 
