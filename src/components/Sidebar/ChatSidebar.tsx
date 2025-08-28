@@ -29,8 +29,8 @@ const ChatSidebar = () => {
   return (
     <>
       {/* 모바일 히스토리 토글 버튼 */}
-      <button 
-        className="mobile-history-toggle md:hidden" 
+      <button
+        className="mobile-history-toggle md:hidden"
         onClick={toggleMobileHistory}
         title="대화 기록"
       >
@@ -44,10 +44,10 @@ const ChatSidebar = () => {
             <i className="oi oi-plus"></i>
             새 대화
           </button>
-          
+
           {/* 모바일에서 닫기 버튼 */}
-          <button 
-            className="mobile-close-btn md:hidden" 
+          <button
+            className="mobile-close-btn md:hidden"
             onClick={closeMobileHistory}
           >
             <i className="oi oi-x"></i>
