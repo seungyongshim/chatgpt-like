@@ -152,10 +152,8 @@ body {
 
 .session-list {
     flex: 1;
-    overflow-y: auto;
+    overflow-y: visible;
     padding: 0.5rem;
-    max-height: calc(100vh - 120px);
-    /* 헤더와 여백 고려 */
 }
 
 .session-item {
@@ -188,20 +186,19 @@ body {
 .chat-main {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    min-height: var(--app-vh, 100vh);
+    height: 100vh;
+    height: var(--app-vh, 100vh);
     background-color: var(--bg-primary);
     position: relative;
-    /* 하단 고정 입력창을 위한 여백 - 조금 더 넉넉하게 */
-    padding-bottom: 160px;
-    /* 입력창 높이 + 여유 공간 */
 }
 
-.chat-container {
+.chat-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    /* 입력창을 위한 하단 여백 */
+    padding-bottom: 140px;
 }
 
 .message-list {
@@ -211,8 +208,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    max-height: calc(100vh - 200px);
-    /* 입력창 공간 확보 */
 }
 
 .message-item {
@@ -298,9 +293,16 @@ body {
 }
 
 .chat-input-container {
-    border-top: 1px solid var(--border-color);
+    position: fixed;
+    bottom: 0;
+    left: 260px; /* 사이드바 너비만큼 오프셋 */
+    right: 0;
+    z-index: 1000;
     background-color: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
     padding: 1rem;
+    /* 그림자로 입력 영역 구분 */
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .chat-input-wrapper {
@@ -530,79 +532,42 @@ body {
     .mobile-close-btn {
         display: block !important;
     }
-}
 
-h1:focus {
-    outline: none;
-}
-
-a,
-.btn-link {
-    color: var(--link-color);
-}
-
-.btn-primary {
-    color: #fff;
-    background-color: var(--btn-primary-bg);
-    border-color: var(--btn-primary-border);
-}
-
-.content {
-    padding-top: 1.1rem;
-}
-
-.valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
-}
-
-.invalid {
-    outline: 1px solid red;
-}
-
-.validation-message {
-    color: red;
-}
-
-/* Dark mode toggle button styles */
-.theme-toggle {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1000;
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: var(--shadow);
-}
-
-.theme-toggle:hover {
-    background: var(--bg-tertiary);
-    transform: scale(1.1);
-}
-
-.theme-toggle i {
-    font-size: 1.2rem;
-}
-
-@media (max-width: 768px) {
-    .theme-toggle {
-        top: 70px;
-        /* 모바일 헤더 아래 배치 */
-        right: 1rem;
-        width: 36px;
-        height: 36px;
+    /* 모바일에서 입력창이 전체 너비를 차지하도록 */
+    .chat-input-container {
+        left: 0;
+        /* 모바일 키보드를 위한 추가 하단 여백 */
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+        /* 모바일에서 더 강한 그림자 */
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
     }
 
-    .theme-toggle i {
-        font-size: 1rem;
+    .chat-content {
+        /* 모바일에서 입력창 높이에 맞춘 하단 여백 조정 */
+        padding-bottom: 120px;
+    }
+
+    .input-controls {
+        gap: 0.5rem;
+    }
+
+    .control-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .control-group label {
+        font-size: 0.75rem;
+    }
+
+    .message-list {
+        padding: 0.75rem;
+    }
+
+    .message-item.message-user,
+    .message-item.message-assistant {
+        max-width: 90%;
     }
 }
 
@@ -634,4 +599,15 @@ a,
 
 .blazor-error-boundary::after {
     content: "An error has occurred."
+}
+
+/* Dark theme - 입력창 그림자 조정 */
+[data-theme="dark"] .chat-input-container {
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 767.98px) {
+    [data-theme="dark"] .chat-input-container {
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
+    }
 }

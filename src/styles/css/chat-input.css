@@ -1,489 +1,314 @@
-/* ChatInput Styles */
+/* ChatInput 스타일 - 완전히 새로 작성 */
 
-.composer {
-    padding: .75rem;
-    border-top: 1px solid var(--border-light);
-    background: var(--bg-primary);
-    /* 안전영역 고려하되 과도하지 않게 */
-    padding-bottom: calc(.75rem + env(safe-area-inset-bottom, 12px));
-    /* 하단에 완전히 고정 - ChatGPT 스타일 */
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 9999;
-    /* 그림자로 입력 영역을 구분 */
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+/* 채팅 입력 컨테이너 - 기본 스타일은 app.css에서 position: fixed로 설정됨 */
+.chat-input-wrapper {
+    max-width: 100%;
 }
 
-/* Advanced Controls Section */
-.advanced-controls-section {
-    margin-top: 0.75rem;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--border-light);
-    background: var(--bg-secondary);
-    transition: all 0.3s ease;
+/* 입력 컨트롤 영역 */
+.input-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
 }
 
-.advanced-controls-header {
-    padding: 0.5rem 0.75rem;
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
-    border-bottom: 1px solid var(--border-light);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    user-select: none;
-}
-
-.advanced-controls-header:hover {
-    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--border-light) 100%);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.advanced-controls-title {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.toggle-controls-btn {
-    color: var(--text-secondary);
-    transition: transform 0.2s ease, color 0.2s ease;
-    text-decoration: none !important;
-}
-
-.toggle-controls-btn:hover {
-    color: var(--text-primary);
-    transform: scale(1.1);
-}
-
-.advanced-controls-content {
-    padding: 0.75rem;
-    background: var(--bg-primary);
-    animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
+@media (max-width: 767.98px) {
+    .input-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
     }
 }
 
-/* Temperature description styling */
-.temperature-description {
-    max-width: 120px;
-    text-align: right;
-    font-size: 0.7rem;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* 개별 컨트롤 그룹 */
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
 }
 
-/* Dark theme adjustments for advanced controls */
-[data-theme="dark"] .advanced-controls-section {
-    border-color: var(--border-color);
-    background: var(--bg-secondary);
+@media (max-width: 767.98px) {
+    .control-group {
+        flex-direction: row;
+        justify-content: space-between;
+    }
 }
 
-[data-theme="dark"] .advanced-controls-header {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
-    border-bottom-color: var(--border-color);
+.control-group label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    min-width: fit-content;
 }
 
-[data-theme="dark"] .advanced-controls-header:hover {
-    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--border-color) 100%);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="dark"] .advanced-controls-content {
-    background: var(--bg-primary);
-}
-
-/* Temperature slider styles */
-.temperature-slider {
-    padding: 0.375rem 0.625rem;
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+/* 모델 선택 드롭다운 */
+.model-select {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--border-color);
     border-radius: 0.375rem;
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow);
-    transition: all 0.2s ease;
-}
-
-.temperature-slider:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-    border-color: var(--border-color);
-}
-
-.temperature-slider .form-label {
-    color: var(--text-secondary);
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0;
-    min-width: 32px;
-}
-
-.temperature-slider .form-range {
-    margin: 0;
-    height: 4px;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    outline: none;
-    transition: all 0.2s ease;
-}
-
-.temperature-slider .form-range:focus {
-    box-shadow: none;
-    outline: 2px solid var(--btn-primary-bg);
-    outline-offset: 2px;
-}
-
-.temperature-slider .form-range:focus::-webkit-slider-thumb {
-    box-shadow: 0 0 0 3px rgba(27, 110, 194, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.temperature-slider .form-range:focus::-moz-range-thumb {
-    box-shadow: 0 0 0 3px rgba(27, 110, 194, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-/* 크롬/사파리용 스타일 */
-.temperature-slider .form-range::-webkit-slider-track {
-    height: 4px;
-    background: linear-gradient(90deg,
-            #3498db 0%,
-            #2ecc71 25%,
-            #f39c12 50%,
-            #e74c3c 75%,
-            #9b59b6 100%);
-    border-radius: 2px;
-    border: none;
-    outline: none;
-    position: relative;
-}
-
-.temperature-slider .form-range::-webkit-slider-runnable-track {
-    height: 4px;
-    background: linear-gradient(90deg,
-            #3498db 0%,
-            #2ecc71 25%,
-            #f39c12 50%,
-            #e74c3c 75%,
-            #9b59b6 100%);
-    border-radius: 2px;
-    border: none;
-    outline: none;
-}
-
-.temperature-slider .form-range::-webkit-slider-thumb {
-    appearance: none;
-    height: 14px;
-    width: 14px;
-    border-radius: 50%;
-    background: #ffffff;
-    border: 2px solid var(--btn-primary-bg);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-top: -5px;
-}
-
-.temperature-slider .form-range::-webkit-slider-thumb:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.temperature-slider .form-range::-webkit-slider-thumb:active {
-    transform: scale(1.05);
-}
-
-/* 파이어폭스용 스타일 */
-.temperature-slider .form-range::-moz-range-track {
-    height: 4px;
-    background: linear-gradient(90deg,
-            #3498db 0%,
-            #2ecc71 25%,
-            #f39c12 50%,
-            #e74c3c 75%,
-            #9b59b6 100%);
-    border-radius: 2px;
-    border: none;
-    outline: none;
-}
-
-.temperature-slider .form-range::-moz-range-thumb {
-    height: 14px;
-    width: 14px;
-    border-radius: 50%;
-    background: #ffffff;
-    border: 2px solid var(--btn-primary-bg);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: none;
-}
-
-.temperature-slider .form-range::-moz-range-thumb:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.temperature-slider span {
+    background-color: var(--bg-primary);
     color: var(--text-primary);
-    font-weight: 600;
-    font-size: 0.85rem;
-    background: var(--bg-primary);
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    border: 1px solid var(--border-light);
-    min-width: 2.5rem;
-    text-align: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    font-size: 0.875rem;
+    min-width: 120px;
+    transition: all 0.2s ease;
+}
+
+.model-select:focus {
+    outline: none;
+    border-color: var(--btn-primary-bg);
+    box-shadow: 0 0 0 0.2rem rgba(27, 110, 194, 0.25);
+}
+
+.effective-model {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* 온도 슬라이더 */
+.temperature-range {
+    min-width: 120px;
+    height: 4px;
+    background: linear-gradient(90deg,
+        #3498db 0%,
+        #2ecc71 25%,
+        #f39c12 50%,
+        #e74c3c 75%,
+        #9b59b6 100%);
+    border-radius: 2px;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.temperature-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid var(--btn-primary-bg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.temperature-range::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.temperature-range::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid var(--btn-primary-bg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    border: none;
 }
 
 .temperature-value {
+    font-size: 0.875rem;
+    font-weight: 600;
     color: var(--text-primary);
-    font-weight: 700;
-    font-size: 0.8rem;
     background: linear-gradient(135deg, var(--btn-primary-bg), #74c0fc);
     color: white;
-    padding: 0.2rem 0.45rem;
-    border-radius: 0.3rem;
-    border: none;
-    min-width: 2.2rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    min-width: 2.5rem;
     text-align: center;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
-    font-family: 'SF Mono', Monaco, monospace;
-    position: relative;
-    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.temperature-value::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.5s ease;
+/* 설정 버튼 */
+.settings-btn {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.temperature-value:hover::before {
-    left: 100%;
+.settings-btn:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
 }
 
-/* Dark theme adjustments for temperature slider */
-[data-theme="dark"] .temperature-slider {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
-    border-color: var(--border-color);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-}
-
-[data-theme="dark"] .temperature-slider:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    border-color: var(--border-light);
-}
-
-[data-theme="dark"] .temperature-slider .form-range::-webkit-slider-thumb {
-    background: var(--bg-primary);
-    border-color: var(--btn-primary-bg);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-[data-theme="dark"] .temperature-slider .form-range::-webkit-slider-thumb:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-}
-
-[data-theme="dark"] .temperature-slider .form-range::-moz-range-thumb {
-    background: var(--bg-primary);
-    border-color: var(--btn-primary-bg);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-[data-theme="dark"] .temperature-slider span {
-    background: var(--bg-secondary);
-    border-color: var(--border-color);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="dark"] .temperature-value {
-    background: linear-gradient(135deg, var(--btn-primary-bg), #339af0);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-/* Dark theme adjustments for composer */
-[data-theme="dark"] .composer {
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4);
-}
-
-@media (max-width: 991.98px) {
-    [data-theme="dark"] .composer {
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
-    }
-}
-
-/* Controls row with inline model selection */
-.controls-row {
+/* 사용량 정보 */
+.usage-info {
+    padding: 0.5rem 0.75rem;
+    background: var(--usage-bg);
+    border: 1px solid var(--usage-border);
+    border-radius: 0.375rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-/* 보내기 버튼을 기본적으로 크게 */
-.controls-row button:first-child {
-    flex: 2 1 auto;
-    min-width: 0;
-    padding: 0.75rem 1.5rem;
+.usage-text {
+    font-size: 0.75rem;
+    color: var(--usage-text);
+    flex: 1;
+}
+
+.usage-refresh-btn {
+    padding: 0.25rem;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.25rem;
+    transition: all 0.2s;
+}
+
+.usage-refresh-btn:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+/* 입력 영역 */
+.input-area {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+}
+
+.message-input {
+    flex: 1;
+    min-height: 60px;
+    max-height: 200px;
+    resize: none;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: inherit;
     font-size: 1rem;
-    font-weight: 500;
+    line-height: 1.5;
+    transition: border-color 0.2s ease;
 }
 
-.controls-row .model-selection-container {
-    min-width: 120px;
-    max-width: 150px;
-    flex: 0 0 auto;
+.message-input:focus {
+    outline: none;
+    border-color: var(--btn-primary-bg);
+    box-shadow: 0 0 0 0.2rem rgba(27, 110, 194, 0.25);
 }
 
-.controls-row .form-select-sm,
-.controls-row .form-control-sm {
-    font-size: 0.875rem;
+.message-input::placeholder {
+    color: var(--text-muted);
 }
 
-/* Mobile responsive adjustments */
+.message-input:disabled {
+    opacity: 0.6;
+    background-color: var(--bg-secondary);
+}
+
+/* 전송 버튼 */
+.send-btn {
+    padding: 0.75rem 1rem;
+    border: none;
+    background-color: var(--btn-primary-bg);
+    color: white;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
+    min-height: 60px;
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.send-btn:hover:not(:disabled) {
+    background-color: var(--btn-primary-border);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.send-btn.sending {
+    background-color: var(--error-color);
+}
+
+.send-btn.sending:hover {
+    background-color: #c82333;
+}
+
+/* 에러 메시지 */
+.error-message {
+    background-color: var(--error-ui-bg);
+    color: var(--error-color);
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-left: 4px solid var(--error-color);
+}
+
+/* 다크 테마 조정 */
+[data-theme="dark"] .temperature-range::-webkit-slider-thumb {
+    background: var(--bg-primary);
+    border-color: var(--btn-primary-bg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .temperature-range::-moz-range-thumb {
+    background: var(--bg-primary);
+    border-color: var(--btn-primary-bg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .temperature-value {
+    background: linear-gradient(135deg, var(--btn-primary-bg), #339af0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* 모바일 추가 조정 */
 @media (max-width: 576px) {
-    .controls-row {
-        display: flex;
-        align-items: center;
+    .input-area {
         gap: 0.5rem;
     }
-
-    /* 모바일에서 온도 슬라이더 스타일 조정 */
-    .temperature-slider {
-        padding: 0.3rem 0.5rem;
+    
+    .message-input {
+        min-height: 50px;
     }
-
-    .temperature-slider .form-label {
-        font-size: 0.7rem;
-        min-width: 26px;
+    
+    .send-btn {
+        min-height: 50px;
+        min-width: 50px;
+        padding: 0.5rem;
     }
-
-    .temperature-slider .form-range {
-        height: 3px;
-    }
-
-    .temperature-slider .form-range::-webkit-slider-track {
-        height: 3px;
-    }
-
-    .temperature-slider .form-range::-webkit-slider-thumb {
-        height: 12px;
-        width: 12px;
-        margin-top: -4.5px;
-    }
-
-    .temperature-slider .form-range::-moz-range-track {
-        height: 3px;
-    }
-
-    .temperature-slider .form-range::-moz-range-thumb {
-        height: 12px;
-        width: 12px;
-    }
-
-    .temperature-slider span {
+    
+    .control-group label {
         font-size: 0.75rem;
-        min-width: 1.8rem;
-        padding: 0.15rem 0.3rem;
     }
-
-    .temperature-value {
-        font-size: 0.75rem;
-        min-width: 2rem;
-        padding: 0.15rem 0.35rem;
-    }
-
-    /* 모바일에서 보내기 버튼을 더욱 크게 */
-    .controls-row button:first-child {
-        flex: 3 1 auto;
-        min-width: 0;
-        padding: 0.875rem 1.5rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-
-    /* 모델 선택을 오른쪽에 더 컴팩트하게 */
-    .controls-row .model-selection-container {
-        flex: 0 0 auto;
-        min-width: 90px;
-        max-width: 110px;
-    }
-
-    /* 설정 버튼 */
-    .controls-row button:last-child {
-        flex: 0 0 auto;
-        padding: 0.5rem 0.625rem;
-    }
-
-    .controls-row .form-select-sm,
-    .controls-row .form-control-sm {
+    
+    .model-select {
         font-size: 0.8rem;
-        padding: 0.375rem 0.5rem;
+        min-width: 100px;
     }
-}
-
-.hint {
-    color: var(--text-muted);
-    font-size: .85rem;
-    margin-top: .25rem;
-}
-
-.error {
-    color: var(--error-color);
-    margin-top: .5rem;
-}
-
-/* Form controls theming */
-.form-control,
-.form-select {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    border-color: var(--border-color);
-}
-
-.form-control:focus,
-.form-select:focus {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    border-color: var(--btn-primary-bg);
-    box-shadow: 0 0 0 0.2rem rgba(66, 139, 202, 0.25);
-}
-
-.form-control::placeholder {
-    color: var(--text-muted);
-}
-
-@media (max-width: 991.98px) {
-    .composer {
-        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 12px));
-        /* 모바일에서도 완전히 하단 고정 */
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 9999;
-        /* 모바일에서 더 강한 그림자 */
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    
+    .temperature-range {
+        min-width: 80px;
     }
 }
