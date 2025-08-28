@@ -295,7 +295,8 @@ body {
 .chat-input-container {
     position: fixed;
     bottom: 0;
-    left: 260px; /* 사이드바 너비만큼 오프셋 */
+    left: 260px;
+    /* 사이드바 너비만큼 오프셋 */
     right: 0;
     z-index: 1000;
     background-color: var(--bg-primary);

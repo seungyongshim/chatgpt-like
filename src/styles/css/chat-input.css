@@ -73,11 +73,11 @@
     min-width: 120px;
     height: 4px;
     background: linear-gradient(90deg,
-        #3498db 0%,
-        #2ecc71 25%,
-        #f39c12 50%,
-        #e74c3c 75%,
-        #9b59b6 100%);
+            #3498db 0%,
+            #2ecc71 25%,
+            #f39c12 50%,
+            #e74c3c 75%,
+            #9b59b6 100%);
     border-radius: 2px;
     outline: none;
     appearance: none;
@@ -288,26 +288,26 @@
     .input-area {
         gap: 0.5rem;
     }
-    
+
     .message-input {
         min-height: 50px;
     }
-    
+
     .send-btn {
         min-height: 50px;
         min-width: 50px;
         padding: 0.5rem;
     }
-    
+
     .control-group label {
         font-size: 0.75rem;
     }
-    
+
     .model-select {
         font-size: 0.8rem;
         min-width: 100px;
     }
-    
+
     .temperature-range {
         min-width: 80px;
     }
