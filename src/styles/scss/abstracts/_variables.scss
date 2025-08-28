@@ -48,12 +48,14 @@ $light-theme: (
     shadow: 0 2px 4px rgba(0, 0, 0, 0.05),
     overlay-bg: rgba(0, 0, 0, 0.5),
 
-    // Message colors
-    msg-user-bg: #e9f5ff,
-    msg-assistant-bg: #f7f7f8,
-    msg-system-bg: #fff3e0,
-    msg-system-border: #ffcc80,
-    system-badge-bg: #ff9800,
+    // Message colors - ChatGPT style
+    msg-user-bg: #2563eb,
+    msg-user-text: white,
+    msg-assistant-bg: #f1f5f9,
+    msg-assistant-text: #1e293b,
+    msg-system-bg: #fef3c7,
+    msg-system-border: #f59e0b,
+    system-badge-bg: #f59e0b,
 
     // Usage info colors
     usage-bg: linear-gradient(135deg, map-get($colors, gray-50) 0%, map-get($colors, gray-100) 100%),
@@ -82,12 +84,14 @@ $dark-theme: (
     shadow: 0 2px 4px rgba(0, 0, 0, 0.3),
     overlay-bg: rgba(0, 0, 0, 0.8),
 
-    // Message colors - dark theme
-    msg-user-bg: #2c5aa0,
-    msg-assistant-bg: #333333,
-    msg-system-bg: #4a3728,
-    msg-system-border: #8b5a2b,
-    system-badge-bg: #e67e22,
+    // Message colors - dark theme ChatGPT style
+    msg-user-bg: #3b82f6,
+    msg-user-text: white,
+    msg-assistant-bg: #374151,
+    msg-assistant-text: #f9fafb,
+    msg-system-bg: #451a03,
+    msg-system-border: #f59e0b,
+    system-badge-bg: #f59e0b,
 
     // Usage info colors - dark theme
     usage-bg: linear-gradient(135deg, #2d2d2d 0%, #404040 100%),
@@ -167,3 +171,16 @@ $zindex-tooltip: 1070 !default;
 $sidebar-width: 260px !default;
 $chat-input-height: 140px !default;
 $mobile-header-height: 60px !default;
+
+// Message bubble variables
+$message-max-width: 70% !default;
+$message-border-radius: 18px !default;
+$message-border-radius-sm: 8px !default;
+$message-padding: 12px 16px !default;
+$message-margin: 16px 0 !default;
+$message-gap: 8px !default;
+
+// Message animation variables
+$message-animation-duration: 0.3s !default;
+$message-hover-scale: 1.02 !default;
+$message-fade-in-duration: 0.4s !default;

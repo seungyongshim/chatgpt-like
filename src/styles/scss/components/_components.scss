@@ -225,80 +225,14 @@
 
 // Message Components
 // ==========================================================================
+// Note: Message styles have been moved to pages/_message-list.scss for better organization
 
-// Base message
+// Legacy message class for backwards compatibility
 .message {
-    @include card-style(spacing(4));
+    // This class is deprecated - use .message-item instead
+    // Keeping for compatibility until migration is complete
     margin-bottom: spacing(4);
-    position: relative;
     transition: $transition-base;
-
-    &:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    &__header {
-        @include flex-between;
-        margin-bottom: spacing(2);
-    }
-
-    &__role {
-        font-weight: $font-weight-bold;
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    &__actions {
-        display: flex;
-        gap: spacing(1);
-        opacity: 0;
-        transition: opacity 0.2s;
-    }
-
-    &:hover &__actions {
-        opacity: 1;
-    }
-
-    &__content {
-        color: var(--text-primary);
-        line-height: 1.6;
-        word-wrap: break-word;
-    }
-
-    // Message variants
-    &--user {
-        background-color: var(--msg-user-bg);
-        align-self: flex-end;
-        max-width: 70%;
-    }
-
-    &--assistant {
-        background-color: var(--msg-assistant-bg);
-        align-self: flex-start;
-        max-width: 85%;
-    }
-
-    &--system {
-        background-color: var(--msg-system-bg);
-        border: 1px solid var(--msg-system-border);
-        position: relative;
-        padding-top: 1.8rem;
-
-        &::before {
-            content: "SYSTEM";
-            position: absolute;
-            top: 0;
-            left: 0;
-            background-color: var(--system-badge-bg);
-            color: white;
-            padding: 0.1rem 0.5rem;
-            font-size: 0.8rem;
-            border-radius: 0 0 4px 0;
-            font-weight: bold;
-        }
-    }
 }
 
 // Card Components

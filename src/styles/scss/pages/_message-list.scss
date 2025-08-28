@@ -1,140 +1,350 @@
 // ==========================================================================
-// MessageList Component - Message Display Styles
+// MessageList Component - ChatGPT-style Message Display
 // ==========================================================================
 
 .message-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: spacing(3);
+    display: flex;
+    flex-direction: column;
+    gap: $message-gap;
+    @include custom-scrollbar();
 
-    // Message items
-    &__item {
-        @extend .message;
-        cursor: pointer;
-        position: relative;
+    // Fade in animation for the entire list
+    animation: fadeIn 0.5s ease-out;
+
+    // Custom scrollbar for better UX
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
 
         &:hover {
-            opacity: 0.8;
+            background: var(--text-secondary);
         }
+    }
+}
 
-        // Character count display
-        &-character-count {
-            position: absolute;
-            bottom: 4px;
-            left: 8px;
+// Message Item Base
+.message-item {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
+    // Message header with role and actions
+    .message-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: spacing(1);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+
+        .message-role {
             font-size: 0.75rem;
-            color: var(--text-muted);
-            background: rgba(255, 255, 255, 0.8);
-            padding: 2px 6px;
-            border-radius: $border-radius-pill;
-            font-weight: $font-weight-bold;
-            pointer-events: none;
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
-
-            [data-theme="dark"] & {
-                background: rgba(0, 0, 0, 0.6);
-                color: var(--text-muted);
-            }
-        }
-
-        // Show character count on hover for assistant messages
-        &.message--assistant {
-            padding-bottom: 1.5rem; // Space for character count
-
-            &:hover .message-list__item-character-count {
-                opacity: 1;
-            }
-        }
-
-        // Editing state
-        &--editing {
-            align-self: stretch;
-            max-width: 100%;
-            cursor: default;
-
-            .message-list__editing-container {
-                width: 100%;
-
-                .form-control {
-                    width: 100%;
-                    background-color: var(--bg-primary);
-                    color: var(--text-primary);
-                    border-color: var(--border-color);
-
-                    &:focus {
-                        background-color: var(--bg-primary);
-                        color: var(--text-primary);
-                        border-color: var(--btn-primary-bg);
-                        box-shadow: 0 0 0 0.2rem rgba(66, 139, 202, 0.25);
-                    }
-                }
-
-                .editing-actions {
-                    @include flex-between;
-                    flex-wrap: wrap;
-                    gap: spacing(2);
-                    margin-top: spacing(3);
-
-                    .btn {
-                        font-size: 0.8rem;
-                        padding: spacing(2) spacing(3);
-                        white-space: nowrap;
-
-                        i {
-                            margin-right: spacing(1);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // System message badge
-    &__system-badge {
-        position: absolute;
-        top: 0;
-        left: 0;
-        background-color: var(--system-badge-bg);
-        color: white;
-        padding: 0.1rem 0.5rem;
-        font-size: 0.8rem;
-        border-radius: 0 0 4px 0;
-        font-weight: bold;
-    }
-
-    // Message action buttons
-    &__actions {
-        .message-action-btn {
-            @extend .btn;
-            @extend .btn--ghost;
-            @extend .btn--sm;
-            padding: spacing(1);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             color: var(--text-secondary);
+            padding: 2px 6px;
+            background: var(--bg-secondary);
             border-radius: $border-radius-sm;
+        }
+
+        .message-actions {
+            @include message-actions;
+        }
+    }
+
+    // Message content wrapper
+    .message-content {
+        position: relative;
+
+        .message-text {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.6;
+        }
+
+        .message-edit-textarea {
+            width: 100%;
+            min-height: 120px;
+            resize: vertical;
+            border: 2px solid var(--btn-primary-bg);
+            border-radius: $border-radius;
+            padding: spacing(3);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+
+            &:focus {
+                outline: none;
+                box-shadow: 0 0 0 0.2rem rgba(27, 110, 194, 0.25);
+            }
+        }
+    }
+
+    // Show header on hover
+    &:hover {
+        .message-header {
+            opacity: 1;
+        }
+
+        .message-actions {
+            opacity: 1;
+        }
+    }
+
+    // User message styles
+    &.message-user {
+        align-items: flex-end;
+
+        .message-content {
+            @include message-bubble-user;
+        }
+
+        .message-role {
+            align-self: flex-end;
+            margin-right: spacing(2);
+        }
+    }
+
+    // Assistant message styles  
+    &.message-assistant {
+        align-items: flex-start;
+
+        .message-content {
+            @include message-bubble-assistant;
+        }
+
+        .message-role {
+            align-self: flex-start;
+            margin-left: spacing(2);
+        }
+
+        // Character count for assistant messages
+        &::after {
+            content: attr(data-char-count) ' chars';
+            position: absolute;
+            bottom: -18px;
+            left: spacing(2);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+
+        &:hover::after {
+            opacity: 0.7;
+        }
+    }
+
+    // System message styles
+    &.message-system {
+        align-items: center;
+
+        .message-content {
+            @include message-bubble-system;
+        }
+
+        .message-role {
+            display: none; // Hidden as it's shown in the bubble badge
+        }
+    }
+}
+
+// Typing indicator
+.typing-indicator {
+    align-self: flex-start;
+    margin-right: auto;
+    max-width: 80px;
+
+    .typing-bubble {
+        @include message-bubble-assistant;
+        @include typing-indicator;
+        border-bottom-left-radius: $message-border-radius-sm;
+        padding: spacing(2) spacing(3);
+        min-height: auto;
+
+        &::after {
+            display: none; // Remove tail for typing indicator
+        }
+    }
+}
+
+// Welcome message styles
+.welcome-message {
+    align-self: center;
+    text-align: center;
+    padding: spacing(6) spacing(4);
+    color: var(--text-secondary);
+
+    h2 {
+        margin-bottom: spacing(3);
+        font-size: 1.5rem;
+        font-weight: 300;
+        color: var(--text-primary);
+    }
+
+    p {
+        margin-bottom: spacing(4);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .suggestion-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: spacing(2);
+        justify-content: center;
+        margin-top: spacing(4);
+
+        .chip {
+            padding: spacing(2) spacing(3);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: $border-radius-pill;
             font-size: 0.875rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
 
             &:hover {
-                background-color: var(--bg-tertiary);
-                color: var(--text-primary);
+                background: var(--bg-tertiary);
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+        }
+    }
+}
+
+// Error message styles
+.error-message {
+    align-self: center;
+    background: var(--error-ui-bg);
+    border: 1px solid var(--error-color);
+    border-left: 4px solid var(--error-color);
+    color: var(--error-color);
+    padding: spacing(3) spacing(4);
+    border-radius: $border-radius;
+    margin: spacing(2) 0;
+    font-size: 0.875rem;
+
+    .error-title {
+        font-weight: 600;
+        margin-bottom: spacing(1);
+    }
+
+    .error-details {
+        opacity: 0.8;
+        font-size: 0.8rem;
+    }
+}
+
+// Animations
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+// Responsive design
+@include media-breakpoint-down(md) {
+    .message-list {
+        padding: spacing(2);
+        gap: spacing(1);
+
+        .message-item {
+
+            &.message-user .message-item__content,
+            &.message-assistant .message-item__content {
+                max-width: 85%;
             }
 
-            &--delete {
-                &:hover {
-                    background-color: lighten(color(danger), 45%);
-                    color: color(danger);
+            &.message-system .message-item__content {
+                max-width: 95%;
+            }
+        }
+
+        .welcome-message {
+            padding: spacing(4) spacing(2);
+
+            .suggestion-chips {
+                .chip {
+                    font-size: 0.8rem;
+                    padding: spacing(1) spacing(2);
                 }
             }
         }
     }
 }
 
-// Responsive adjustments
-@include media-breakpoint-down(md) {
+@include media-breakpoint-down(sm) {
     .message-list {
-        &__item {
+        .message-item {
 
-            &.message--user,
-            &.message--assistant {
+            &.message-user .message-item__content,
+            &.message-assistant .message-item__content {
                 max-width: 90%;
+                font-size: 0.9rem;
+            }
+
+            &__header {
+                .message-role {
+                    font-size: 0.7rem;
+                }
+
+                .message-actions .btn {
+                    padding: 2px 6px;
+                    font-size: 0.7rem;
+                }
             }
         }
+    }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+    .message-item {
+        &.message-user .message-item__content {
+            border: 2px solid var(--text-primary);
+        }
+
+        &.message-assistant .message-item__content {
+            border: 2px solid var(--text-secondary);
+        }
+    }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+    .message-item {
+        &__content {
+            animation: none;
+            transition: none;
+        }
+
+        &:hover {
+            transform: none;
+        }
+    }
+
+    .typing-indicator .typing-bubble .dot {
+        animation: none;
     }
 }
