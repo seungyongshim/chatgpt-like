@@ -26,40 +26,46 @@
     npm install
     ```
 2.  **개발 서버 실행:**
-    ```bash
-    npm run dev
-    ```
-    애플리케이션은 `http://localhost:5173`에서 사용할 수 있습니다.
+    ````instructions
+    # ChatGPT-like React App · 에이전트 작업 가이드
 
-### 주요 스크립트
+    프로젝트는 React + TypeScript + Vite 기반의 Chat UI로, 상태는 `Zustand`로 단일 저장소(`src/stores/chatStore.ts`)에서 관리되고, 백엔드 호출은 `src/services` 계층으로 분리됩니다.
 
--   `npm run dev`: Vite 개발 서버를 시작합니다.
--   `npm run build`: TypeScript를 컴파일하고 프로덕션을 위해 애플리케이션을 `dist` 디렉토리에 빌드합니다.
--   `npm run lint`: ESLint를 사용하여 코드베이스를 린트합니다.
+    ## 아키텍처 · 데이터 흐름(핵심)
+    - 컴포넌트(`src/components/**`) → 저장소(`useChatStore`) → 서비스(`chatService`/`storageService`) → 저장소 갱신 → UI 반영의 단방향 흐름을 유지합니다.
+    - 채팅 흐름: `ChatInput`이 `sendMessage(signal)` 호출 → `chatStore.sendMessage`가 사용자 메시지를 추가 후 어시스턴트 빈 메시지 생성 → `chatService.getResponseStreaming`으로 SSE/스트림 청크를 수신하며 마지막 어시스턴트 메시지 내용을 누적 갱신합니다.
+    - 메시지 렌더링: `MessageList`는 첫 `system` 메시지를 분리 표시하고, 나머지는 순서대로 렌더링합니다. 편집/삭제/재전송은 전부 저장소 액션을 통해 처리합니다.
 
-## 핵심 개념 및 패턴
+    ## 백엔드 API 계약(OpenAI 호환 + 일부 폴백)
+    - Base URL: 기본 `http://localhost:4141` (`src/services/chatService.ts`의 `ChatService`). 필요 시 인스턴스 생성부를 수정해 교체하세요.
+    - GET `/v1/models`: 우선 `{ data: [{ id }] }`에서 `id` 수집, 없으면 `{ models: string[] }` 폴백. 실패 시 `localStorage('LAST_MODEL')`로 복원하여 입력 박스(드롭다운 대신) 노출.
+    - POST `/v1/chat/completions`(stream: true): 각 줄이 `data: ...` 형식. OpenAI 스트리밍 규약의 `choices[0].delta.content`를 누적. 헤더는 `Content-Type: application/json`과 `anthropic-beta: output-128k-2025-02-19`를 전송합니다.
+    - GET `/usage`: `quota_snapshots.premium_interactions.{remaining,entitlement}`에서 사용량을 계산하여 `UsageInfo`로 매핑합니다.
 
-### Zustand를 사용한 상태 관리
+    ## 상태/지속성 관례(저장소가 단일 진실 소스)
+    - 세션(`Session`): 첫 메시지는 항상 `system`. 새 채팅은 현재 `systemMessage`로 시작. 제목은 첫 사용자 메시지 20자 기준 생성(`updateSessionTitle`). 마지막 한 개 세션은 삭제 금지.
+    - 모델 설정은 모델별 키로 저장: `MODEL_SETTINGS::${model}`에 `{ temperature, maxTokens }`. 최근 모델은 `LAST_MODEL`.
+    - 테마는 `<html data-theme>`로 제어하며 `THEME_PREFERENCE`에 `dark|light` 저장. 시스템 메시지는 `SYSTEM_MESSAGE`에도 동기화.
+    - 영속화는 IndexedDB 우선(`ChatAppDB` v1, 오브젝트 스토어: `sessions`, `settings`) → 실패 시 `localStorage` 폴백. 세션 저장 시 `sessions` 스토어를 `clear()` 후 전체 재기록합니다.
 
--   **저장소:** `src/stores/chatStore.ts`는 애플리케이션의 로직을 이해하는 데 가장 중요한 파일입니다. 채팅 세션, 메시지, 모델 설정 및 UI 토글을 관리하기 위한 상태와 작업을 포함합니다.
--   **상태 접근:** React 컴포넌트에서 `useChatStore` 훅을 사용하여 상태와 작업에 접근합니다.
-    ```tsx
-    // 컴포넌트 예시
-    import { useChatStore } from '../stores/chatStore';
+    ## 개발 워크플로우(명령/포트)
+    - 설치/개발/빌드/린트: `npm install` · `npm run dev`(포트 `5173`) · `npm run build` · `npm run lint`.
+    - 프록시 설정 없음(Vite). 백엔드(4141)는 별도 구동 필요. CORS 문제 시 백엔드 허용 또는 Vite 프록시 추가를 검토하세요.
 
-    const messages = useChatStore(state => state.messages);
-    const sendMessage = useChatStore(state => state.sendMessage);
-    ```
--   **상태 수정:** 저장소 내의 작업은 상태를 수정하는 데 사용됩니다. 이러한 작업은 종종 비동기적이며 `chatService` 또는 `storageService`와 같은 서비스와 상호 작용합니다.
+    ## 확장 패턴(이 코드베이스에서의 방법)
+    - 새 API 연동: `src/services/chatService.ts`에 메서드 추가 → 저장소 액션에서 호출/상태 갱신 → 컴포넌트는 `useChatStore`만 사용.
+      ```tsx
+      // 컴포넌트 예시
+      const messages = useChatStore(s => s.messages);
+      const sendMessage = useChatStore(s => s.sendMessage);
+      ```
+    - 스트림 취소/중단은 `AbortController`를 통해 처리합니다. UI에서 컨트롤러를 생성해 `sendMessage(controller.signal)`로 전달하세요(`ChatInput` 참고).
 
-### 서비스 계층
+    ## 주의할 점(이 프로젝트 특이사항)
+    - 스트리밍 중 오류 시, 비어있는 어시스턴트 자리표시자는 제거합니다(저장소 로직 내 처리). 시간초과/취소 메시지 구분 처리 존재.
+    - 모델 목록이 비어있으면 드롭다운 대신 자유 입력 필드가 노출됩니다(직접 모델 ID 입력 가능).
+    - `MessageList`는 `system`을 맨 위로 분리하므로 인덱싱 시 원본 배열 인덱스를 유지해야 합니다(컴포넌트가 원본 인덱스를 전달).
+    - `Date`는 저장 시 ISO 문자열, 로드시 `Date`로 재구성합니다(`StorageService` 변환 참조).
 
--   `src/services/chatService.ts`의 `ChatService`는 모든 API 호출을 추상화합니다.
--   핵심 기능인 채팅 메시지에 대한 스트리밍 응답을 처리합니다. `getResponseStreaming` 비동기 생성기는 이 기능의 핵심입니다.
--   새로운 백엔드 상호 작용을 추가하려면 이 서비스를 확장하십시오.
-
-### 세션 및 메시지 관리
-
--   `Session` 객체(`src/services/types.ts`)는 단일 채팅 대화를 나타냅니다.
--   `chatStore`는 세션 목록과 현재 활성 세션을 관리합니다.
--   세션 내의 메시지는 `ChatMessage` 객체의 배열입니다. 첫 번째 메시지는 항상 `system` 메시지입니다.
+    핵심 참조 파일: `src/stores/chatStore.ts`, `src/services/{chatService,storageService,types}.ts`, `src/components/Chat/*`, `src/styles/css/*`, `vite.config.ts`, `package.json`.
+    ````
