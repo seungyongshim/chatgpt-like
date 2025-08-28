@@ -208,13 +208,12 @@
 .usage-info {
     display: flex;
     align-items: center;
-    gap: spacing(2);
+    justify-content: center;
     flex: 0 0 auto;
 
     @include media-breakpoint-down(sm) {
         order: 3;
         width: 100%;
-        justify-content: center;
         margin-top: spacing(1);
     }
 
@@ -223,111 +222,15 @@
         color: var(--text-secondary);
         font-weight: $font-weight-bold;
         white-space: nowrap;
+        padding: spacing(1) spacing(2);
+        background-color: var(--bg-secondary);
+        border-radius: $border-radius;
+        border: 1px solid var(--border-color);
 
         @include media-breakpoint-down(sm) {
             font-size: 0.8rem;
+            padding: spacing(1);
         }
-    }
-
-    .usage-refresh-btn {
-        @include button-style(transparent, var(--text-secondary));
-        width: 24px;
-        height: 24px;
-        padding: 0;
-        border-radius: $border-radius-pill;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        &:hover {
-            background-color: var(--bg-secondary);
-            color: var(--btn-primary-bg);
-        }
-
-        i {
-            font-size: 0.875rem;
-        }
-    }
-}
-
-// Usage information display
-.usage-info {
-    padding: spacing(2) spacing(3);
-    background: var(--usage-bg);
-    border: 1px solid var(--usage-border);
-    border-radius: $border-radius;
-    @include flex-between;
-    gap: spacing(2);
-
-    @include media-breakpoint-down(md) {
-        padding: spacing(2);
-        flex-direction: column;
-        align-items: stretch;
-        gap: spacing(1);
-    }
-
-    @include media-breakpoint-down(sm) {
-        padding: spacing(2);
-        background-color: var(--bg-tertiary);
-        border-radius: $border-radius-lg;
-        text-align: center;
-        margin-top: spacing(1);
-    }
-}
-
-.usage-text {
-    font-size: 0.75rem;
-    color: var(--usage-text);
-    flex: 1;
-    margin: 0;
-
-    @include media-breakpoint-down(md) {
-        text-align: center;
-        margin-bottom: spacing(1);
-    }
-
-    @include media-breakpoint-down(sm) {
-        font-size: 0.7rem;
-        font-weight: $font-weight-bold;
-        text-align: center;
-        margin-bottom: 0;
-    }
-}
-
-.usage-refresh-btn {
-    background: transparent;
-    color: var(--text-secondary);
-    border: none;
-    padding: spacing(1);
-    @include flex-center;
-    min-width: 28px;
-    min-height: 28px;
-    border-radius: $border-radius-pill;
-    cursor: pointer;
-    transition: $transition-base;
-
-    &:hover {
-        color: color(info);
-        background-color: alpha-color(color(info), 0.1);
-        transform: scale(1.1);
-    }
-
-    &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-
-        &:hover {
-            background-color: transparent;
-        }
-    }
-
-    &.spinning {
-        animation: spin 1s linear infinite;
-    }
-
-    i {
-        font-size: 0.8rem;
     }
 }
 
