@@ -331,7 +331,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         newMessages, 
         model, 
         state.temperature, 
-        state.maxTokens, 
+        state.maxTokens ?? undefined, 
         signal
       );
       
@@ -600,7 +600,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const key = `MODEL_SETTINGS::${state.selectedModel}`;
     const settings: ModelSettings = {
       temperature: state.temperature,
-      maxTokens: state.maxTokens
+      maxTokens: state.maxTokens ?? undefined
     };
     
     localStorage.setItem(key, JSON.stringify(settings));

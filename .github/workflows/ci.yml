@@ -13,13 +13,9 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'
-  DOTNET_NOLOGO: '1'
-
 jobs:
-  build_and_test:
-    name: Build & Test
+  build:
+    name: Build (Vite)
     runs-on: ubuntu-latest
 
     steps:
@@ -28,44 +24,36 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          dotnet-version: '9.0.x'
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Cache NuGet
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Restore & Build
-        working-directory: src
+      - name: Install dependencies
         run: |
-          dotnet clean
-          dotnet restore
-          dotnet build --configuration Release --no-restore
+          npm ci || npm install
 
-      - name: Publish (dotnet)
-        working-directory: src
+      - name: Build
+        env:
+          # Vite에서 base를 GitHub Pages 하위 경로로 설정할 때 사용
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          dotnet publish -c Release -o ../docs
-          sed -i 's%<base href="/"%<base href="/${{ github.event.repository.name }}/"%g' ../docs/wwwroot/index.html
-          cat ../docs/wwwroot/index.html
-          touch ../docs/wwwroot/.nojekyll
-          # Ensure the directory exists and has content
-          ls -la ../docs/wwwroot/
+          npm run build
+
+      - name: SPA fallback (404.html)
+        run: |
+          cp dist/index.html dist/404.html
+          touch dist/.nojekyll
 
       - name: Upload site artifact (for Pages)
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/wwwroot
+          path: dist
 
-  deploy_pages:
+  deploy:
     name: Deploy to GitHub Pages
-    needs: build_and_test
+    needs: build
     if: github.event_name == 'push' && github.ref_name == 'master'
     runs-on: ubuntu-latest
 

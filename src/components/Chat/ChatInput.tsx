@@ -9,7 +9,6 @@ const ChatInput = () => {
   const temperature = useChatStore(state => state.temperature);
   const availableModels = useChatStore(state => state.availableModels);
   const selectedModel = useChatStore(state => state.selectedModel);
-  const showSettingsOverlay = useChatStore(state => state.showSettingsOverlay);
   
   const setUserInput = useChatStore(state => state.setUserInput);
   const sendMessage = useChatStore(state => state.sendMessage);
@@ -17,7 +16,6 @@ const ChatInput = () => {
   const setTemperature = useChatStore(state => state.setTemperature);
   const toggleSettingsOverlay = useChatStore(state => state.toggleSettingsOverlay);
   const getEffectiveModel = useChatStore(state => state.getEffectiveModel);
-  const loadUsage = useChatStore(state => state.loadUsage);
   
   const [localInput, setLocalInput] = useState('');
   const [cancellationController, setCancellationController] = useState<AbortController | null>(null);
