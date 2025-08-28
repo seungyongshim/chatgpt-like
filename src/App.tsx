@@ -16,7 +16,7 @@ function App() {
   return (
     <div className="app">
       <ThemeToggle />
-      
+
       <div className="chat-layout">
         <ChatSidebar />
         <ChatContainer />
