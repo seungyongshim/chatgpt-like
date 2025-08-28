@@ -1,0 +1,113 @@
+// ==========================================================================
+// Reset - CSS Reset and Base Styles
+// ==========================================================================
+
+// CSS Reset and global styles
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    font-family: $font-family-base;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    // 세로 스크롤은 제한하되 가로는 허용
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+// Root theme variables
+:root {
+    @include theme-variables($light-theme);
+}
+
+[data-theme="dark"] {
+    @include theme-variables($dark-theme);
+}
+
+// Remove default margins and paddings
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+dl,
+dd,
+ol,
+ul,
+form,
+fieldset,
+legend,
+table,
+th,
+td,
+caption,
+hr {
+    margin: 0;
+    padding: 0;
+}
+
+// List reset
+ul,
+ol {
+    list-style: none;
+}
+
+// Button reset
+button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+}
+
+// Input reset
+input,
+textarea,
+select {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+// Link reset
+a {
+    color: var(--link-color);
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+// Image reset
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+// Table reset
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+// Focus styles
+:focus-visible {
+    outline: 2px solid var(--btn-primary-bg);
+    outline-offset: 2px;
+}

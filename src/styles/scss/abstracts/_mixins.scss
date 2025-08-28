@@ -1,0 +1,274 @@
+// ==========================================================================
+// Mixins - Reusable SCSS Mixins for ChatGPT-like React App
+// ==========================================================================
+
+// Theme function - Get theme color value
+@function theme-color($key, $theme: 'light') {
+    @if $theme =='light' {
+        @return map-get($light-theme, $key);
+    }
+
+    @else {
+        @return map-get($dark-theme, $key);
+    }
+}
+
+// Get color from palette
+@function color($key) {
+    @return map-get($colors, $key);
+}
+
+// Get spacing value
+@function spacing($key) {
+    @return map-get($spacers, $key);
+}
+
+// Advanced color functions
+@function lighten-color($color, $amount: 10%) {
+    @return lighten($color, $amount);
+}
+
+@function darken-color($color, $amount: 10%) {
+    @return darken($color, $amount);
+}
+
+@function alpha-color($color, $alpha: 0.5) {
+    @return rgba($color, $alpha);
+}
+
+// Auto-generate color variations
+@function color-variant($base-color, $variant: 'normal') {
+    @if $variant =='light' {
+        @return lighten($base-color, 20%);
+    }
+
+    @else if $variant =='dark' {
+        @return darken($base-color, 20%);
+    }
+
+    @else if $variant =='muted' {
+        @return alpha-color($base-color, 0.6);
+    }
+
+    @else {
+        @return $base-color;
+    }
+}
+
+// Media query mixin
+@mixin media-breakpoint-up($name) {
+    $min: map-get($breakpoints, $name);
+
+    @if $min !=0 {
+        @media (min-width: $min) {
+            @content;
+        }
+    }
+
+    @else {
+        @content;
+    }
+}
+
+@mixin media-breakpoint-down($name) {
+    $max: map-get($breakpoints, $name) - 0.02px;
+
+    @media (max-width: $max) {
+        @content;
+    }
+}
+
+@mixin media-breakpoint-between($lower, $upper) {
+    $min: map-get($breakpoints, $lower);
+    $max: map-get($breakpoints, $upper) - 0.02px;
+
+    @if $min !=0 {
+        @media (min-width: $min) and (max-width: $max) {
+            @content;
+        }
+    }
+
+    @else {
+        @media (max-width: $max) {
+            @content;
+        }
+    }
+}
+
+// Button mixin
+@mixin button-style($bg-color, $text-color: white, $border-color: null) {
+    $border: if($border-color, $border-color, $bg-color);
+
+    background-color: $bg-color;
+    color: $text-color;
+    border: 1px solid $border;
+    border-radius: $border-radius;
+    cursor: pointer;
+    transition: $transition-base;
+
+    &:hover:not(:disabled) {
+
+        // For CSS variables, we can't use darken(), so use filter instead
+        @if str-index(inspect($bg-color), 'var(') {
+            filter: brightness(0.9);
+        }
+
+        @else {
+            background-color: darken($bg-color, 5%);
+            border-color: darken($border, 5%);
+        }
+
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+// Form control mixin
+@mixin form-control-style() {
+    padding: spacing(3) spacing(4);
+    border: 1px solid var(--border-color);
+    border-radius: $border-radius;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: $font-family-base;
+    font-size: $font-size-base;
+    transition: $transition-base;
+
+    &:focus {
+        outline: none;
+        border-color: var(--btn-primary-bg);
+        box-shadow: 0 0 0 0.2rem rgba(27, 110, 194, 0.25);
+    }
+
+    &::placeholder {
+        color: var(--text-muted);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        background-color: var(--bg-secondary);
+    }
+}
+
+// Card/Panel mixin
+@mixin card-style($padding: spacing(4)) {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: $border-radius-lg;
+    padding: $padding;
+    box-shadow: var(--shadow);
+    color: var(--text-primary);
+}
+
+// Flexbox utilities
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@mixin flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+@mixin flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+// Grid system mixin
+@mixin make-container($max-width: 100%) {
+    width: 100%;
+    max-width: $max-width;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: spacing(4);
+    padding-right: spacing(4);
+}
+
+// Scrollbar styling
+@mixin custom-scrollbar($width: 8px, $track-color: transparent, $thumb-color: var(--border-color)) {
+    &::-webkit-scrollbar {
+        width: $width;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: $track-color;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: $thumb-color;
+        border-radius: $border-radius-pill;
+
+        &:hover {
+
+            // For CSS variables, use filter instead of darken()
+            @if str-index(inspect($thumb-color), 'var(') {
+                filter: brightness(0.8);
+            }
+
+            @else {
+                background: darken($thumb-color, 10%);
+            }
+        }
+    }
+}
+
+// Hover effect mixin
+@mixin hover-lift($translate-y: -2px, $shadow: 0 4px 8px rgba(0, 0, 0, 0.15)) {
+    transition: $transition-base;
+
+    &:hover {
+        transform: translateY($translate-y);
+        box-shadow: $shadow;
+    }
+}
+
+// Text truncation
+@mixin text-truncate($lines: 1) {
+    @if $lines ==1 {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    @else {
+        display: -webkit-box;
+        -webkit-line-clamp: $lines;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+}
+
+// Loading animation
+@mixin loading-pulse {
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    animation: pulse 2s infinite;
+}
+
+// Theme variable mixin
+@mixin theme-variables($theme-map) {
+    @each $key, $value in $theme-map {
+        --#{$key}: #{$value};
+    }
+}

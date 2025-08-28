@@ -1,0 +1,220 @@
+// ==========================================================================
+// Typography - Font Styles and Text Utilities
+// ==========================================================================
+
+// Base typography
+body {
+    font-family: $font-family-base;
+    font-size: $font-size-base;
+    font-weight: $font-weight-normal;
+    line-height: $line-height-base;
+    color: var(--text-primary);
+}
+
+// Headings
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin-bottom: spacing(2);
+    font-weight: $font-weight-bold;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+h1 {
+    font-size: 2.5rem;
+}
+
+h2 {
+    font-size: 2rem;
+}
+
+h3 {
+    font-size: 1.75rem;
+}
+
+h4 {
+    font-size: 1.5rem;
+}
+
+h5 {
+    font-size: 1.25rem;
+}
+
+h6 {
+    font-size: 1rem;
+}
+
+// Paragraphs
+p {
+    margin-bottom: spacing(4);
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+// Text utilities
+.text-primary {
+    color: var(--text-primary);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-success {
+    color: color(success);
+}
+
+.text-danger {
+    color: var(--error-color);
+}
+
+.text-warning {
+    color: color(warning);
+}
+
+.text-info {
+    color: color(info);
+}
+
+// Font weights
+.fw-normal {
+    font-weight: $font-weight-normal;
+}
+
+.fw-bold {
+    font-weight: $font-weight-bold;
+}
+
+// Text alignment
+.text-left {
+    text-align: left;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+// Text transform
+.text-uppercase {
+    text-transform: uppercase;
+}
+
+.text-lowercase {
+    text-transform: lowercase;
+}
+
+.text-capitalize {
+    text-transform: capitalize;
+}
+
+// Text decoration
+.text-decoration-none {
+    text-decoration: none;
+}
+
+.text-decoration-underline {
+    text-decoration: underline;
+}
+
+// Font sizes
+.fs-sm {
+    font-size: 0.875rem;
+}
+
+.fs-base {
+    font-size: $font-size-base;
+}
+
+.fs-lg {
+    font-size: 1.125rem;
+}
+
+.fs-xl {
+    font-size: 1.25rem;
+}
+
+// Line height
+.lh-1 {
+    line-height: 1;
+}
+
+.lh-sm {
+    line-height: 1.25;
+}
+
+.lh-base {
+    line-height: $line-height-base;
+}
+
+.lh-lg {
+    line-height: 1.8;
+}
+
+// Text truncation utilities
+.text-truncate {
+    @include text-truncate(1);
+}
+
+.text-truncate-2 {
+    @include text-truncate(2);
+}
+
+.text-truncate-3 {
+    @include text-truncate(3);
+}
+
+// Code and pre
+code {
+    padding: 0.125rem 0.25rem;
+    background-color: var(--bg-secondary);
+    border-radius: $border-radius-sm;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875em;
+    color: var(--text-primary);
+}
+
+pre {
+    padding: spacing(4);
+    background-color: var(--bg-secondary);
+    border-radius: $border-radius;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--text-primary);
+    overflow-x: auto;
+
+    code {
+        padding: 0;
+        background: none;
+        border-radius: 0;
+        font-size: inherit;
+    }
+}
+
+// Blockquote
+blockquote {
+    padding: spacing(4);
+    margin: spacing(4) 0;
+    border-left: 4px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-style: italic;
+
+    p:last-child {
+        margin-bottom: 0;
+    }
+}

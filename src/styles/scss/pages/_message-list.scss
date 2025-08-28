@@ -1,0 +1,140 @@
+// ==========================================================================
+// MessageList Component - Message Display Styles
+// ==========================================================================
+
+.message-list {
+
+    // Message items
+    &__item {
+        @extend .message;
+        cursor: pointer;
+        position: relative;
+
+        &:hover {
+            opacity: 0.8;
+        }
+
+        // Character count display
+        &-character-count {
+            position: absolute;
+            bottom: 4px;
+            left: 8px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 2px 6px;
+            border-radius: $border-radius-pill;
+            font-weight: $font-weight-bold;
+            pointer-events: none;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+
+            [data-theme="dark"] & {
+                background: rgba(0, 0, 0, 0.6);
+                color: var(--text-muted);
+            }
+        }
+
+        // Show character count on hover for assistant messages
+        &.message--assistant {
+            padding-bottom: 1.5rem; // Space for character count
+
+            &:hover .message-list__item-character-count {
+                opacity: 1;
+            }
+        }
+
+        // Editing state
+        &--editing {
+            align-self: stretch;
+            max-width: 100%;
+            cursor: default;
+
+            .message-list__editing-container {
+                width: 100%;
+
+                .form-control {
+                    width: 100%;
+                    background-color: var(--bg-primary);
+                    color: var(--text-primary);
+                    border-color: var(--border-color);
+
+                    &:focus {
+                        background-color: var(--bg-primary);
+                        color: var(--text-primary);
+                        border-color: var(--btn-primary-bg);
+                        box-shadow: 0 0 0 0.2rem rgba(66, 139, 202, 0.25);
+                    }
+                }
+
+                .editing-actions {
+                    @include flex-between;
+                    flex-wrap: wrap;
+                    gap: spacing(2);
+                    margin-top: spacing(3);
+
+                    .btn {
+                        font-size: 0.8rem;
+                        padding: spacing(2) spacing(3);
+                        white-space: nowrap;
+
+                        i {
+                            margin-right: spacing(1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // System message badge
+    &__system-badge {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: var(--system-badge-bg);
+        color: white;
+        padding: 0.1rem 0.5rem;
+        font-size: 0.8rem;
+        border-radius: 0 0 4px 0;
+        font-weight: bold;
+    }
+
+    // Message action buttons
+    &__actions {
+        .message-action-btn {
+            @extend .btn;
+            @extend .btn--ghost;
+            @extend .btn--sm;
+            padding: spacing(1);
+            color: var(--text-secondary);
+            border-radius: $border-radius-sm;
+            font-size: 0.875rem;
+
+            &:hover {
+                background-color: var(--bg-tertiary);
+                color: var(--text-primary);
+            }
+
+            &--delete {
+                &:hover {
+                    background-color: lighten(color(danger), 45%);
+                    color: color(danger);
+                }
+            }
+        }
+    }
+}
+
+// Responsive adjustments
+@include media-breakpoint-down(md) {
+    .message-list {
+        &__item {
+
+            &.message--user,
+            &.message--assistant {
+                max-width: 90%;
+            }
+        }
+    }
+}

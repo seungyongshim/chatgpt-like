@@ -1,0 +1,281 @@
+// ==========================================================================
+// ChatInput Component - Chat Input Interface Styles
+// ==========================================================================
+
+.chat-input {
+
+    // Chat input wrapper (fixed at bottom)
+    &__wrapper {
+        max-width: 100%;
+    }
+
+    // Input controls section
+    &__controls {
+        @include flex-between;
+        gap: spacing(3);
+        margin-bottom: spacing(3);
+        flex-wrap: wrap;
+
+        @include media-breakpoint-down(md) {
+            @include flex-column;
+            align-items: stretch;
+            gap: spacing(2);
+        }
+    }
+
+    // Individual control groups
+    &__control-group {
+        @include flex-center;
+        gap: spacing(2);
+        flex: 0 0 auto;
+
+        @include media-breakpoint-down(md) {
+            justify-content: space-between;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: $font-weight-bold;
+            color: var(--text-secondary);
+            min-width: fit-content;
+        }
+    }
+
+    // Model selection dropdown
+    &__model-select {
+        @extend .form-select;
+        min-width: 120px;
+        font-size: 0.875rem;
+
+        @include media-breakpoint-down(sm) {
+            min-width: 100px;
+            font-size: 0.8rem;
+        }
+    }
+
+    // Effective model display
+    &__effective-model {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    // Temperature control
+    &__temperature {
+        &-container {
+            @include flex-center;
+            gap: spacing(2);
+        }
+
+        &-range {
+            @extend .form-range;
+            min-width: 120px;
+            height: 4px;
+            background: linear-gradient(90deg,
+                    color(info) 0%,
+                    color(success) 25%,
+                    color(warning) 50%,
+                    color(danger) 75%,
+                    color(primary) 100%);
+            border-radius: 2px;
+
+            @include media-breakpoint-down(sm) {
+                min-width: 80px;
+            }
+
+            &::-webkit-slider-thumb {
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background: white;
+                border: 2px solid var(--btn-primary-bg);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                cursor: pointer;
+                transition: $transition-base;
+
+                &:hover {
+                    transform: scale(1.1);
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+                }
+            }
+
+            &::-moz-range-thumb {
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background: white;
+                border: 2px solid var(--btn-primary-bg);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                cursor: pointer;
+                border: none;
+            }
+        }
+
+        &-value {
+            font-size: 0.875rem;
+            font-weight: $font-weight-bold;
+            background: linear-gradient(135deg, var(--btn-primary-bg), color(info));
+            color: white;
+            padding: spacing(1) spacing(2);
+            border-radius: $border-radius;
+            min-width: 2.5rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    }
+
+    // Settings button
+    &__settings-btn {
+        @extend .btn;
+        @extend .btn--ghost;
+        @extend .btn--icon;
+        padding: spacing(2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    // Usage information display
+    &__usage {
+        padding: spacing(2) spacing(3);
+        background: var(--usage-bg);
+        border: 1px solid var(--usage-border);
+        border-radius: $border-radius;
+        @include flex-between;
+        gap: spacing(2);
+
+        &-text {
+            font-size: 0.75rem;
+            color: var(--usage-text);
+            flex: 1;
+        }
+
+        &-refresh-btn {
+            @extend .btn;
+            @extend .btn--ghost;
+            @extend .btn--icon;
+            @extend .btn--sm;
+            transition: $transition-base;
+            border-radius: $border-radius-pill;
+
+            &:hover {
+                color: color(info) !important;
+                background-color: rgba(color(info), 0.1);
+                transform: scale(1.1);
+            }
+
+            &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+
+                &:hover {
+                    background-color: transparent;
+                }
+            }
+
+            &.spinning {
+                animation: spin 1s linear infinite;
+            }
+        }
+    }
+
+    // Main input area
+    &__area {
+        display: flex;
+        gap: spacing(3);
+        align-items: flex-end;
+
+        @include media-breakpoint-down(sm) {
+            gap: spacing(2);
+        }
+    }
+
+    // Text input field
+    &__input {
+        @extend .form-control;
+        flex: 1;
+        min-height: 60px;
+        max-height: 200px;
+        resize: none;
+        line-height: 1.5;
+
+        @include media-breakpoint-down(sm) {
+            min-height: 50px;
+        }
+
+        &:disabled {
+            opacity: 0.6;
+            background-color: var(--bg-secondary);
+        }
+    }
+
+    // Send button
+    &__send-btn {
+        @extend .btn;
+        @extend .btn--primary;
+        min-height: 60px;
+        min-width: 60px;
+        @include flex-center;
+
+        @include media-breakpoint-down(sm) {
+            min-height: 50px;
+            min-width: 50px;
+            padding: spacing(2);
+        }
+
+        &--sending {
+            background-color: var(--error-color);
+
+            &:hover {
+                background-color: darken(color(danger), 10%);
+            }
+        }
+    }
+
+    // Error message display
+    &__error {
+        @extend .alert;
+        @extend .alert--danger;
+        margin-bottom: spacing(3);
+        @include flex-center;
+        gap: spacing(2);
+    }
+}
+
+// Dark theme specific adjustments
+[data-theme="dark"] {
+    .chat-input {
+        &__temperature {
+            &-range {
+                &::-webkit-slider-thumb {
+                    background: var(--bg-primary);
+                    border-color: var(--btn-primary-bg);
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+                }
+
+                &::-moz-range-thumb {
+                    background: var(--bg-primary);
+                    border-color: var(--btn-primary-bg);
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+                }
+            }
+
+            &-value {
+                background: linear-gradient(135deg, var(--btn-primary-bg), color(info));
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            }
+        }
+    }
+}
+
+// Animations
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

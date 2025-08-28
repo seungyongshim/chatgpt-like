@@ -1,0 +1,251 @@
+// ==========================================================================
+// SettingsPanel Component - Settings Modal Styles
+// ==========================================================================
+
+.settings {
+
+    // Settings overlay (modal backdrop)
+    &__overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--overlay-bg);
+        @include flex-center;
+        z-index: $zindex-modal;
+    }
+
+    // Settings panel (modal content)
+    &__panel {
+        @extend .card;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow: auto;
+        padding: 0;
+        @include custom-scrollbar();
+    }
+
+    // Panel header
+    &__header {
+        @include flex-between;
+        padding: spacing(4) spacing(6);
+        border-bottom: 1px solid var(--border-color);
+
+        h5 {
+            margin: 0;
+            font-weight: $font-weight-bold;
+            color: var(--text-primary);
+        }
+    }
+
+    // Close button
+    &__close-btn {
+        @extend .btn;
+        @extend .btn--ghost;
+        @extend .btn--icon;
+        @extend .btn--sm;
+        font-size: 1.5rem;
+        line-height: 1;
+        color: var(--text-secondary);
+        width: 24px;
+        height: 24px;
+
+        &:hover {
+            color: var(--text-primary);
+        }
+    }
+
+    // Panel body
+    &__body {
+        padding: spacing(6);
+
+        .form-label {
+            color: var(--text-primary);
+            font-weight: $font-weight-bold;
+            margin-bottom: spacing(2);
+        }
+
+        .form-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: spacing(1);
+        }
+
+        // Form groups
+        .form-group {
+            margin-bottom: spacing(4);
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        // Form controls theming for settings
+        .form-control,
+        .form-select {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+
+            &:focus {
+                background-color: var(--bg-primary);
+                color: var(--text-primary);
+                border-color: var(--btn-primary-bg);
+                box-shadow: 0 0 0 0.2rem rgba(66, 139, 202, 0.25);
+            }
+
+            &::placeholder {
+                color: var(--text-muted);
+            }
+        }
+
+        // Textarea specific styling
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        // Number input styling
+        input[type="number"].form-control {
+            appearance: textfield;
+            -moz-appearance: textfield;
+
+            &::-webkit-outer-spin-button,
+            &::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                appearance: none;
+                margin: 0;
+            }
+        }
+
+        // Range input in settings
+        .form-range {
+            margin: spacing(3) 0;
+        }
+
+        // Switch/checkbox styling
+        .form-check {
+            padding-left: 1.5em;
+
+            .form-check-input {
+                float: left;
+                margin-left: -1.5em;
+                margin-top: 0.25em;
+
+                &:checked {
+                    background-color: var(--btn-primary-bg);
+                    border-color: var(--btn-primary-bg);
+                }
+
+                &:focus {
+                    border-color: var(--btn-primary-bg);
+                    box-shadow: 0 0 0 0.2rem rgba(27, 110, 194, 0.25);
+                }
+            }
+
+            .form-check-label {
+                color: var(--text-primary);
+            }
+        }
+
+        // Button group in settings
+        .btn-group {
+            display: flex;
+            gap: spacing(2);
+            margin-top: spacing(4);
+
+            .btn {
+                flex: 1;
+            }
+        }
+    }
+
+    // Settings sections
+    &__section {
+        margin-bottom: spacing(6);
+        padding-bottom: spacing(4);
+        border-bottom: 1px solid var(--border-light);
+
+        &:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        &-title {
+            font-size: 1.125rem;
+            font-weight: $font-weight-bold;
+            color: var(--text-primary);
+            margin-bottom: spacing(3);
+            padding-bottom: spacing(2);
+            border-bottom: 2px solid var(--btn-primary-bg);
+        }
+
+        &-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: spacing(4);
+            line-height: 1.5;
+        }
+    }
+
+    // Advanced settings toggle
+    &__advanced-toggle {
+        @extend .btn;
+        @extend .btn--ghost;
+        @extend .btn--sm;
+        margin-top: spacing(3);
+        color: var(--text-secondary);
+
+        &::before {
+            content: "▶";
+            margin-right: spacing(2);
+            transition: transform 0.2s ease;
+        }
+
+        &--expanded {
+            &::before {
+                transform: rotate(90deg);
+            }
+        }
+    }
+
+    &__advanced-content {
+        margin-top: spacing(3);
+        padding-top: spacing(3);
+        border-top: 1px solid var(--border-light);
+        display: none;
+
+        &--visible {
+            display: block;
+        }
+    }
+}
+
+// Mobile responsive adjustments
+@include media-breakpoint-down(sm) {
+    .settings {
+        &__panel {
+            width: 95%;
+            max-height: 90vh;
+        }
+
+        &__header {
+            padding: spacing(3) spacing(4);
+        }
+
+        &__body {
+            padding: spacing(4);
+        }
+
+        &__section {
+            margin-bottom: spacing(4);
+
+            &-title {
+                font-size: 1rem;
+            }
+        }
+    }
+}
