@@ -17,7 +17,7 @@ const MessageList = () => {
         />
       )}
       
-      {otherMessages.map((message, index) => {
+      {otherMessages.map((message) => {
         const originalIndex = messages.indexOf(message);
         return (
           <MessageItem 
