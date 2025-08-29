@@ -5,6 +5,7 @@
 // 1. Bootstrap CSS - External dependency
 @import "../css/bootstrap/bootstrap.min.css";
 // 1-1. Highlight.js default style for code blocks
+// 1-1. Highlight.js default style for code blocks (Vite: use package path)
 @import "highlight.js/styles/github.css";
 
 // 2. Abstracts - Variables, functions, mixins (no output)

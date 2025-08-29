@@ -432,12 +432,8 @@
     // Smooth animation for new messages
     animation: fadeInMessage $message-fade-in-duration ease-out;
 
-    // Subtle hover effect - only on non-touch devices
-    @include non-touch-device {
-        &:hover {
-            transform: scale($message-hover-scale);
-        }
-    }
+    // Subtle hover effect removed for mobile-first consistency (no scale on hover)
+    // Intentionally no transform scale on hover to avoid motion and layout shift
 
     // Enhanced focus for accessibility
     &:focus-within {
@@ -560,7 +556,7 @@
 @mixin message-actions {
     display: flex;
     gap: spacing(1);
-    opacity: 0;
+    opacity: 1; // Always visible for mobile/touch and desktop
     transition: opacity 0.2s ease;
 
     // Mobile: Always visible for touch accessibility with better spacing
@@ -623,12 +619,12 @@
             }
         }
 
-        // Non-touch hover effects
+        // Non-touch hover effects (no scale)
         @include non-touch-device {
             &:hover {
                 background: var(--bg-tertiary);
                 color: var(--text-primary);
-                transform: scale(1.05);
+                // No transform scale on hover
             }
         }
 
@@ -742,19 +738,7 @@
             }
         }
 
-        // Text labels on mobile for better UX
-        @include mobile-only {
-            &[title]::after {
-                content: attr(title);
-                margin-left: 4px;
-                font-size: 0.7rem;
-
-                // Hide text on very small screens
-                @media (max-width: 360px) {
-                    display: none;
-                }
-            }
-        }
+        // Remove mobile title captions to keep icons-only UI
     }
 }
 

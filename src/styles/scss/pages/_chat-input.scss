@@ -3,16 +3,20 @@
 // ==========================================================================
 
 // Main chat input container (fixed at bottom)
+// 콘텐츠 컬럼 가로폭을 그대로 채우도록 sticky 하단 고정
 .chat-input-container {
-    position: fixed;
+    position: sticky;
     bottom: 0;
-    left: $sidebar-width;
+    left: 0;
     right: 0;
     z-index: $zindex-fixed;
     background-color: var(--bg-primary);
     border-top: 1px solid var(--border-color);
     padding: spacing(4);
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+
+    // 부모가 overflow: hidden인 경우 sticky가 작동하므로
+    // 상위 `.chat-content`에는 overflow: hidden 유지하되, 스크롤 컨테이너는 `.message-list`로 한정
 
     @include media-breakpoint-down(md) {
         left: 0;

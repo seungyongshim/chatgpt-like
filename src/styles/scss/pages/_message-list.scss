@@ -31,6 +31,9 @@
             background: var(--text-secondary);
         }
     }
+
+    // 고정 입력창과 겹치지 않도록 하단 여백 확보
+    padding-bottom: calc(var(--chat-input-h, #{$chat-input-height}) + #{spacing(2)});
 }
 
 // Message Item Base
@@ -45,7 +48,7 @@
         align-items: center;
         justify-content: space-between;
         margin-bottom: spacing(1);
-        opacity: 0;
+        opacity: 1; // Always visible for mobile/touch
         transition: opacity 0.2s ease;
 
         .message-role {
@@ -94,16 +97,7 @@
         }
     }
 
-    // Show header on hover
-    &:hover {
-        .message-header {
-            opacity: 1;
-        }
-
-        .message-actions {
-            opacity: 1;
-        }
-    }
+    // Header/actions are always visible; no hover reveal behavior
 
     // User message styles
     &.message-user {
@@ -145,7 +139,8 @@
             pointer-events: none;
         }
 
-        &:hover::after {
+        // Remove hover-only visibility for char count to reduce hover dependency
+        &::after {
             opacity: 0.7;
         }
     }
