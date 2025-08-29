@@ -562,15 +562,15 @@
     // Mobile: Always visible for touch accessibility with better spacing
     @include mobile-only {
         opacity: 1;
-        gap: spacing(2);
+        gap: spacing(1);
         flex-wrap: wrap; // Allow wrapping on very small screens
         justify-content: flex-end;
         align-items: center;
     }
 
     .message-action-btn {
-        // Mobile-first: Touch-friendly sizing
-        padding: spacing(2);
+        // Mobile-first: Touch-friendly sizing (slightly tighter visuals)
+        padding: spacing(1);
         font-size: 0.8rem;
         border: none;
         background: var(--bg-secondary);
@@ -583,26 +583,30 @@
         justify-content: center;
         min-width: $message-action-min-size;
         height: $message-action-min-size;
+        @include enhanced-focus;
 
         // Enhanced mobile touch targets
         @include mobile-only {
-            min-width: $touch-target-comfortable;
-            height: $touch-target-comfortable;
-            border-radius: $border-radius;
-
-            // Better visual feedback
-            border: 1px solid var(--border-color);
-
-            // Improved text contrast
-            font-weight: 500;
+            // Compact on narrow mobile layouts
+            min-width: 28px;
+            height: 28px;
+            padding: 0;
+            background: transparent;
+            border: none;
+            border-radius: $border-radius-sm;
+            font-weight: 400;
         }
 
         // Tablet and up: Smaller compact buttons
         @include tablet-up {
-            padding: 6px 8px;
-            font-size: 0.75rem;
-            min-width: 28px;
-            height: 28px;
+            // Icon-only compact style on tablet and larger
+            padding: 0;
+            background: transparent;
+            border: none;
+            min-width: auto;
+            height: auto;
+            font-size: 1rem; // match body text size visually
+            color: var(--text-secondary);
         }
 
         // Touch device interactions
@@ -729,12 +733,13 @@
             font-size: 0.8rem;
 
             @include tablet-up {
-                font-size: 0.7rem;
+                font-size: 1rem; // match text size
+                line-height: 1;
             }
 
-            // Mobile: Larger icons for better visibility
+            // Mobile: Slightly larger for visibility
             @include mobile-only {
-                font-size: 1rem;
+                font-size: 0.85rem;
             }
         }
 

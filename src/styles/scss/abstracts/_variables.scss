@@ -195,7 +195,8 @@ $mobile-keyboard-threshold: 60vh !default; // Below this height, assume keyboard
 $mobile-scroll-padding-bottom: 120px !default; // Extra padding to keep focused inputs visible
 
 // Message action button sizing
-$message-action-min-size: 32px !default; // Minimum size for action buttons
+$message-action-min-size: 28px !default; // Base minimum (mobile-first baseline)
+$message-action-size-tablet-up: 24px !default; // Compact size on tablet and larger
 
 // Mobile-specific message sizing
 $message-padding-mobile: 12px 14px !default;
