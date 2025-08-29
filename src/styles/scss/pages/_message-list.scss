@@ -63,6 +63,21 @@
             line-height: 1.6;
         }
 
+        // 메타 정보(문자수 카운터 등)
+        .message-meta {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: spacing(1);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+
+            .char-counter {
+                background: transparent;
+                padding: 0;
+                line-height: 1;
+            }
+        }
+
         .message-edit-textarea {
             width: 100%;
             min-height: 120px;
@@ -129,29 +144,7 @@
     }
 }
 
-// Typing indicator
-.typing-indicator {
-    align-self: flex-start;
-    margin-right: auto;
-    max-width: 80px;
-
-    .typing-bubble {
-
-        // Inject container layout into base block via @content of message-bubble-assistant
-        @include message-bubble-assistant {
-            border-bottom-left-radius: $message-border-radius-sm;
-            padding: spacing(2) spacing(3);
-            min-height: auto;
-        }
-
-        // Dots animation styling
-        @include typing-indicator-dots;
-
-        &::after {
-            display: none; // Remove tail for typing indicator
-        }
-    }
-}
+// Typing indicator removed; replaced by in-bubble character counter during streaming
 
 // Welcome message styles
 .welcome-message {
@@ -281,9 +274,5 @@
         &:hover {
             transform: none;
         }
-    }
-
-    .typing-indicator .typing-bubble .dot {
-        animation: none;
     }
 }

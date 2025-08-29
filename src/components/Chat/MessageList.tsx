@@ -4,7 +4,6 @@ import MessageItem from './MessageItem';
 
 const MessageList = () => {
   const messages = useChatStore(state => state.messages);
-  const isSending = useChatStore(state => state.isSending);
 
   const listRef = useRef<HTMLDivElement>(null);
   const [stickToBottom, setStickToBottom] = useState(true);
@@ -56,16 +55,7 @@ const MessageList = () => {
         );
       })}
 
-      {/* 타이핑 인디케이터 */}
-      {isSending && (
-        <div className="typing-indicator">
-          <div className="typing-bubble">
-            <span className="dot"></span>
-            <span className="dot"></span>
-            <span className="dot"></span>
-          </div>
-        </div>
-      )}
+      {/* 기존 '...' 타이핑 인디케이터 제거됨: 마지막 assistant 말풍선 내 문자수 카운터로 대체 */}
     </div>
   );
 };

@@ -19,6 +19,7 @@ const MessageItem = ({ message, messageIndex }: MessageItemProps) => {
   const deleteMessage = useChatStore(state => state.deleteMessage);
   const resendMessage = useChatStore(state => state.resendMessage);
   const isSending = useChatStore(state => state.isSending);
+  const messages = useChatStore(state => state.messages);
 
   const [localEditText, setLocalEditText] = useState('');
   const [copied, setCopied] = useState(false);
@@ -130,6 +131,12 @@ const MessageItem = ({ message, messageIndex }: MessageItemProps) => {
     return `message-item message-${role}`;
   };
 
+  const isLastAssistantMessage =
+    message.role === 'assistant' &&
+    messages.length > 0 &&
+    messages[messages.length - 1] === message;
+  const charCount = isEditing ? localEditText.length : message.text.length;
+
   return (
     <div className={getRoleClass(message.role)}>
       <div className="message-header">
@@ -226,6 +233,19 @@ const MessageItem = ({ message, messageIndex }: MessageItemProps) => {
             ) : (
               <>{message.text}</>
             )}
+          </div>
+        )}
+
+        {/* 어시스턴트 메시지 하단에 문자수 카운트 상시 표시
+            - 스트리밍 중 마지막 어시스턴트일 때만 aria-live로 부드럽게 업데이트 */}
+        {message.role === 'assistant' && (
+          <div className="message-meta">
+            <span
+              className="char-counter"
+              aria-live={isLastAssistantMessage && isSending ? 'polite' : 'off'}
+            >
+              {charCount.toLocaleString()}자
+            </span>
           </div>
         )}
       </div>
