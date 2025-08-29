@@ -248,6 +248,43 @@ const MessageItem = ({ message, messageIndex }: MessageItemProps) => {
             </span>
           </div>
         )}
+
+        {/* 어시스턴트(응답) 메시지 버블 하단에도 동일한 액션 버튼 표시 */}
+        {message.role === 'assistant' && !isEditing && (
+          <div className="message-footer">
+            <div className="message-actions">
+              <button
+                className="message-action-btn"
+                onClick={handleStartEdit}
+                title="편집"
+                aria-label="편집"
+              >
+                <i className="oi oi-pencil"></i>
+              </button>
+
+              <button
+                className="message-action-btn copy-btn"
+                onClick={handleCopyToClipboard}
+                title="복사"
+                aria-label="복사"
+              >
+                <i className="oi oi-clipboard"></i>
+              </button>
+              {copied && (
+                <span className="copy-feedback" aria-live="polite">복사됨</span>
+              )}
+
+              <button
+                className="message-action-btn delete-btn"
+                onClick={handleDelete}
+                title="삭제"
+                aria-label="삭제"
+              >
+                <i className="oi oi-trash"></i>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

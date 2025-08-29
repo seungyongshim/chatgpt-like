@@ -96,6 +96,19 @@
                 box-shadow: 0 0 0 0.2rem rgba(27, 110, 194, 0.25);
             }
         }
+
+        // 하단 푸터 액션 버튼 (응답/assistant 버블 하단)
+        .message-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: spacing(1);
+            opacity: 1;
+            transition: opacity 0.2s ease;
+
+            .message-actions {
+                @include message-actions;
+            }
+        }
     }
 
     // Header/actions are always visible; no hover reveal behavior
