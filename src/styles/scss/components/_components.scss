@@ -120,6 +120,7 @@
 .form-select {
     // Include mixin first (emits nested rules), then wrap declarations in & {} to opt into new behavior
     @include form-control-style();
+
     & {
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
         background-repeat: no-repeat;
@@ -383,34 +384,34 @@
     border-radius: $border-radius;
 
     &--primary {
-    color: s-color.adjust(color(primary), $lightness: -20%);
-    background-color: s-color.adjust(color(primary), $lightness: 45%);
-    border-color: s-color.adjust(color(primary), $lightness: 35%);
+        color: s-color.adjust(color(primary), $lightness: -20%);
+        background-color: s-color.adjust(color(primary), $lightness: 45%);
+        border-color: s-color.adjust(color(primary), $lightness: 35%);
     }
 
     &--success {
-    color: s-color.adjust(color(success), $lightness: -20%);
-    background-color: s-color.adjust(color(success), $lightness: 45%);
-    border-color: s-color.adjust(color(success), $lightness: 35%);
+        color: s-color.adjust(color(success), $lightness: -20%);
+        background-color: s-color.adjust(color(success), $lightness: 45%);
+        border-color: s-color.adjust(color(success), $lightness: 35%);
     }
 
     &--danger {
         color: var(--error-color);
         background-color: var(--error-ui-bg);
-    border-color: s-color.adjust(color(danger), $lightness: 35%);
+        border-color: s-color.adjust(color(danger), $lightness: 35%);
         border-left: 4px solid var(--error-color);
     }
 
     &--warning {
-    color: s-color.adjust(color(warning), $lightness: -20%);
-    background-color: s-color.adjust(color(warning), $lightness: 45%);
-    border-color: s-color.adjust(color(warning), $lightness: 35%);
+        color: s-color.adjust(color(warning), $lightness: -20%);
+        background-color: s-color.adjust(color(warning), $lightness: 45%);
+        border-color: s-color.adjust(color(warning), $lightness: 35%);
     }
 
     &--info {
-    color: s-color.adjust(color(info), $lightness: -20%);
-    background-color: s-color.adjust(color(info), $lightness: 45%);
-    border-color: s-color.adjust(color(info), $lightness: 35%);
+        color: s-color.adjust(color(info), $lightness: -20%);
+        background-color: s-color.adjust(color(info), $lightness: 45%);
+        border-color: s-color.adjust(color(info), $lightness: 35%);
     }
 
     &__close {

@@ -61,6 +61,7 @@
 %model-control-shared {
     // Include mixin first, then wrap base declarations to opt into new behavior
     @include form-control-style;
+
     & {
         flex: 1;
         min-width: 150px;
@@ -103,6 +104,7 @@
 .model-input {
     @extend %model-control-shared;
 }
+
 // Effective model display
 .effective-model {
     font-size: 0.75rem;
@@ -114,6 +116,7 @@
 // Temperature control
 .temperature-range {
     @include form-control-style;
+
     & {
         flex: 0 0 120px;
         min-width: 120px;
@@ -256,6 +259,7 @@
 // Text input field
 .message-input {
     @include form-control-style;
+
     & {
         flex: 1;
         min-height: 60px;

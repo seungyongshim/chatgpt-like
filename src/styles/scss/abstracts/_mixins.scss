@@ -44,11 +44,11 @@
 // Auto-generate color variations
 @function color-variant($base-color, $variant: 'normal') {
     @if $variant =='light' {
-    @return s-color.adjust($base-color, $lightness: 20%);
+        @return s-color.adjust($base-color, $lightness: 20%);
     }
 
     @else if $variant =='dark' {
-    @return s-color.adjust($base-color, $lightness: -20%);
+        @return s-color.adjust($base-color, $lightness: -20%);
     }
 
     @else if $variant =='muted' {
@@ -332,6 +332,7 @@
         border-radius: $border-radius-pill;
 
         &:hover {
+
             // For CSS variables, use filter instead of color adjustments
             @if string.index(meta.inspect($thumb-color), 'var(') {
                 filter: brightness(0.8);
@@ -419,6 +420,7 @@
 
 // Message bubble mixins - Mobile First Approach
 @mixin message-bubble-base {
+
     // Mobile-first base styles
     & {
         padding: $message-padding-mobile;
@@ -459,7 +461,9 @@
     }
 
     // Smooth animation for new messages
-    & { animation: fadeInMessage $message-fade-in-duration ease-out; }
+    & {
+        animation: fadeInMessage $message-fade-in-duration ease-out;
+    }
 
     // Subtle hover effect removed for mobile-first consistency (no scale on hover)
     // Intentionally no transform scale on hover to avoid motion and layout shift
@@ -473,6 +477,7 @@
 
 @mixin message-bubble-user {
     @include message-bubble-base;
+
     & {
         background: var(--msg-user-bg);
         color: var(--msg-user-text, white);
@@ -504,6 +509,7 @@
 
 @mixin message-bubble-assistant {
     @include message-bubble-base;
+
     & {
         background: var(--msg-assistant-bg);
         color: var(--msg-assistant-text, var(--text-primary));
@@ -539,6 +545,7 @@
 
 @mixin message-bubble-system {
     @include message-bubble-base;
+
     & {
         background: var(--msg-system-bg);
         border: 2px solid var(--msg-system-border);
