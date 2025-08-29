@@ -419,9 +419,9 @@
 }
 
 // Message bubble mixins - Mobile First Approach
-@mixin message-bubble-base {
+@mixin message-bubble-base() {
 
-    // Mobile-first base styles
+    // Mobile-first base styles (allow injection of additional declarations)
     & {
         padding: $message-padding-mobile;
         border-radius: $message-border-radius;
@@ -435,6 +435,8 @@
         transition: all $message-animation-duration ease;
         position: relative;
         font-size: $message-font-size-mobile; // 16px to prevent iOS zoom
+        animation: fadeInMessage $message-fade-in-duration ease-out;
+        @content; // inject user/assistant/system specific base declarations here
     }
 
     // Enhanced mobile text handling
@@ -460,11 +462,6 @@
         line-height: $line-height-base;
     }
 
-    // Apply animation at the end to avoid mixed-decls after nested rules
-    & {
-        animation: fadeInMessage $message-fade-in-duration ease-out;
-    }
-
     // Subtle hover effect removed for mobile-first consistency (no scale on hover)
     // Intentionally no transform scale on hover to avoid motion and layout shift
 
@@ -476,9 +473,7 @@
 }
 
 @mixin message-bubble-user {
-    @include message-bubble-base;
-
-    & {
+    @include message-bubble-base() {
         background: var(--msg-user-bg);
         color: var(--msg-user-text, white);
         align-self: flex-end;
@@ -508,15 +503,15 @@
 }
 
 @mixin message-bubble-assistant {
-    @include message-bubble-base;
-
-    & {
+    @include message-bubble-base() {
         background: var(--msg-assistant-bg);
         color: var(--msg-assistant-text, var(--text-primary));
         align-self: flex-start;
         margin-right: auto;
         border-bottom-left-radius: $message-border-radius-sm;
         border: 1px solid var(--border-color);
+        // Allow callers to inject/override declarations within the base block
+        @content;
     }
 
     // Mobile: Enhanced readability and interaction
@@ -544,9 +539,7 @@
 }
 
 @mixin message-bubble-system {
-    @include message-bubble-base;
-
-    & {
+    @include message-bubble-base() {
         background: var(--msg-system-bg);
         border: 2px solid var(--msg-system-border);
         color: var(--text-primary);
@@ -1142,13 +1135,7 @@
 }
 
 // Typing indicator mixin
-@mixin typing-indicator {
-    & {
-        display: flex;
-        gap: 4px;
-        padding: 16px;
-    }
-
+@mixin typing-indicator-dots {
     .dot {
         width: 8px;
         height: 8px;

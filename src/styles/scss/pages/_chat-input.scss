@@ -59,6 +59,7 @@
 
 // Model selection dropdown
 @mixin model-control-shared {
+
     // Base declarations first in & {}, then nested rules
     & {
         flex: 1;
