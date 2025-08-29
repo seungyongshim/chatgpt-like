@@ -75,7 +75,9 @@
 
 // Legacy support for existing code
 @mixin media-breakpoint-up($name) {
-    @include mobile-up($name);
+    @include mobile-up($name) {
+        @content;
+    }
 }
 
 // For cases where we need max-width (rarely used in mobile-first)
@@ -89,7 +91,9 @@
 
 // Legacy support
 @mixin media-breakpoint-down($name) {
-    @include mobile-down($name);
+    @include mobile-down($name) {
+        @content;
+    }
 }
 
 // Between breakpoints
@@ -125,11 +129,15 @@
 }
 
 @mixin tablet-up {
-    @include mobile-up(md);
+    @include mobile-up(md) {
+        @content;
+    }
 }
 
 @mixin desktop-up {
-    @include mobile-up(lg);
+    @include mobile-up(lg) {
+        @content;
+    }
 }
 
 // Touch device detection
@@ -141,6 +149,13 @@
 
 @mixin non-touch-device {
     @media (hover: hover) and (pointer: fine) {
+        @content;
+    }
+}
+
+// Respect reduced motion preference - apply content only when motion is allowed
+@mixin no-reduced-motion {
+    @media (prefers-reduced-motion: no-preference) {
         @content;
     }
 }

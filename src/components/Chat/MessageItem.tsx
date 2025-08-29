@@ -1,4 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
 import { useChatStore } from '../../stores/chatStore';
 import { ChatMessage } from '../../services/types';
 
@@ -16,12 +19,13 @@ const MessageItem = ({ message, messageIndex }: MessageItemProps) => {
   const deleteMessage = useChatStore(state => state.deleteMessage);
   const resendMessage = useChatStore(state => state.resendMessage);
   const isSending = useChatStore(state => state.isSending);
-  
+
   const [localEditText, setLocalEditText] = useState('');
+  const [copied, setCopied] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   const isEditing = editingMessageIndex === messageIndex;
-  
+
   useEffect(() => {
     if (isEditing) {
       setLocalEditText(editingText);
@@ -68,6 +72,8 @@ const MessageItem = ({ message, messageIndex }: MessageItemProps) => {
     try {
       await navigator.clipboard.writeText(message.text);
       console.log('텍스트가 클립보드에 복사되었습니다.');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('클립보드 복사 실패:', error);
       // 폴백: 텍스트 선택을 통한 복사
@@ -79,14 +85,16 @@ const MessageItem = ({ message, messageIndex }: MessageItemProps) => {
       document.body.appendChild(textArea);
       textArea.focus();
       textArea.select();
-      
+
       try {
         document.execCommand('copy');
         console.log('폴백 방법으로 클립보드에 복사되었습니다.');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       } catch (fallbackError) {
         console.error('폴백 복사도 실패:', fallbackError);
       }
-      
+
       document.body.removeChild(textArea);
     }
   };
@@ -129,25 +137,28 @@ const MessageItem = ({ message, messageIndex }: MessageItemProps) => {
         <div className="message-actions">
           {!isEditing && (
             <>
-              <button 
-                className="message-action-btn" 
+              <button
+                className="message-action-btn"
                 onClick={handleStartEdit}
                 title="편집"
               >
                 <i className="oi oi-pencil"></i>
               </button>
-              
-              <button 
-                className="message-action-btn" 
+
+              <button
+                className="message-action-btn copy-btn"
                 onClick={handleCopyToClipboard}
                 title="복사"
               >
                 <i className="oi oi-clipboard"></i>
               </button>
-              
+              {copied && (
+                <span className="copy-feedback" aria-live="polite">복사됨</span>
+              )}
+
               {message.role === 'user' && (
-                <button 
-                  className="message-action-btn" 
+                <button
+                  className="message-action-btn"
                   onClick={handleResend}
                   disabled={isSending}
                   title="재전송"
@@ -155,9 +166,9 @@ const MessageItem = ({ message, messageIndex }: MessageItemProps) => {
                   <i className="oi oi-reload"></i>
                 </button>
               )}
-              
-              <button 
-                className="message-action-btn delete-btn" 
+
+              <button
+                className="message-action-btn delete-btn"
                 onClick={handleDelete}
                 title={message.role === 'system' ? "기본값으로 재설정" : "삭제"}
               >
@@ -165,19 +176,19 @@ const MessageItem = ({ message, messageIndex }: MessageItemProps) => {
               </button>
             </>
           )}
-          
+
           {isEditing && (
             <>
-              <button 
-                className="message-action-btn save-btn" 
+              <button
+                className="message-action-btn save-btn"
                 onClick={handleSaveEdit}
                 title="저장 (Ctrl+Enter)"
               >
                 <i className="oi oi-check"></i>
               </button>
-              
-              <button 
-                className="message-action-btn cancel-btn" 
+
+              <button
+                className="message-action-btn cancel-btn"
                 onClick={handleCancelEdit}
                 title="취소 (Esc)"
               >
@@ -187,7 +198,7 @@ const MessageItem = ({ message, messageIndex }: MessageItemProps) => {
           )}
         </div>
       </div>
-      
+
       <div className="message-content">
         {isEditing ? (
           <textarea
@@ -199,8 +210,22 @@ const MessageItem = ({ message, messageIndex }: MessageItemProps) => {
             placeholder="메시지를 입력하세요..."
           />
         ) : (
-          <div className="message-text" style={{ whiteSpace: 'pre-wrap' }}>
-            {message.text}
+          <div className="message-text">
+            {message.role === 'assistant' ? (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeHighlight]}
+                components={{
+                  a: (props) => (
+                    <a {...props} target="_blank" rel="noopener noreferrer" />
+                  )
+                }}
+              >
+                {message.text}
+              </ReactMarkdown>
+            ) : (
+              <>{message.text}</>
+            )}
           </div>
         )}
       </div>

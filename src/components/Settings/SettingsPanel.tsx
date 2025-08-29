@@ -8,12 +8,12 @@ const SettingsPanel = () => {
   const systemMessage = useChatStore(state => state.systemMessage);
   const maxTokens = useChatStore(state => state.maxTokens);
   const selectedModel = useChatStore(state => state.selectedModel);
-  
+
   const setSystemMessage = useChatStore(state => state.setSystemMessage);
   const setMaxTokens = useChatStore(state => state.setMaxTokens);
   const saveModelSettings = useChatStore(state => state.saveModelSettings);
   const closeSettingsOverlay = useChatStore(state => state.closeSettingsOverlay);
-  
+
   const [localSystemMessage, setLocalSystemMessage] = useState(systemMessage);
   const [localMaxTokens, setLocalMaxTokens] = useState(maxTokens?.toString() || '');
   const [defaultModel, setDefaultModel] = useState('');
@@ -70,7 +70,7 @@ const SettingsPanel = () => {
       const result = await StorageService.clearStorage();
       setConnectionStatus(result ? 'IndexedDB 초기화 완료' : 'IndexedDB 초기화 실패');
       setConnectionOk(result);
-      
+
       if (result) {
         // 페이지 새로고침으로 앱 재초기화
         setTimeout(() => {
@@ -84,105 +84,121 @@ const SettingsPanel = () => {
   };
 
   return (
-    <div className="settings-overlay">
-      <div className="settings-panel">
-        <div className="settings-header">
-          <h2>설정</h2>
-          <button 
-            className="close-btn" 
+    <div className="settings__overlay" aria-modal="true" role="dialog">
+      <div className="settings__panel">
+        <div className="settings__header">
+          <h5>설정</h5>
+          <button
+            className="settings__close-btn"
             onClick={closeSettingsOverlay}
             title="닫기"
+            aria-label="설정 닫기"
           >
             <i className="oi oi-x"></i>
           </button>
         </div>
 
-        <div className="settings-content">
+        <div className="settings__body">
           {/* 시스템 메시지 설정 */}
-          <div className="setting-group">
-            <label htmlFor="system-message">시스템 메시지:</label>
-            <textarea
-              id="system-message"
-              value={localSystemMessage}
-              onChange={(e) => setLocalSystemMessage(e.target.value)}
-              placeholder="시스템 메시지를 입력하세요..."
-              className="system-message-input"
-              rows={4}
-            />
-            <button onClick={handleSystemMessageChange} className="save-btn">
-              시스템 메시지 저장
-            </button>
-          </div>
+          <section className="settings__section">
+            <div className="settings__section-header">
+              <h6 className="settings__section-title">시스템 메시지</h6>
+            </div>
+            <div className="settings__section-content">
+              <label className="form-label" htmlFor="system-message">시스템 메시지</label>
+              <textarea
+                id="system-message"
+                className="form-control"
+                value={localSystemMessage}
+                onChange={(e) => setLocalSystemMessage(e.target.value)}
+                placeholder="시스템 메시지를 입력하세요..."
+                rows={4}
+              />
+              <div className="btn-group">
+                <button onClick={handleSystemMessageChange} className="btn btn--primary">
+                  시스템 메시지 저장
+                </button>
+              </div>
+            </div>
+          </section>
 
           {/* 모델 설정 */}
-          <div className="setting-group">
-            <h3>현재 모델 설정 ({selectedModel})</h3>
-            
-            <div className="setting-item">
-              <label htmlFor="max-tokens">최대 토큰 수:</label>
-              <input
-                id="max-tokens"
-                type="number"
-                value={localMaxTokens}
-                onChange={(e) => setLocalMaxTokens(e.target.value)}
-                placeholder="비워두면 제한 없음"
-                className="max-tokens-input"
-                min="1"
-                max="100000"
-              />
+          <section className="settings__section">
+            <div className="settings__section-header">
+              <h6 className="settings__section-title">현재 모델 설정 ({selectedModel})</h6>
             </div>
-            
-            <button onClick={handleModelSettingsChange} className="save-btn">
-              모델 설정 저장
-            </button>
-          </div>
+            <div className="settings__section-content">
+              <div className="form-group">
+                <label className="form-label" htmlFor="max-tokens">최대 토큰 수</label>
+                <input
+                  id="max-tokens"
+                  type="number"
+                  className="form-control"
+                  value={localMaxTokens}
+                  onChange={(e) => setLocalMaxTokens(e.target.value)}
+                  placeholder="비워두면 제한 없음"
+                  min={1}
+                  max={100000}
+                />
+              </div>
+              <div className="btn-group">
+                <button onClick={handleModelSettingsChange} className="btn btn--primary">
+                  모델 설정 저장
+                </button>
+              </div>
+            </div>
+          </section>
 
           {/* 기본 설정 */}
-          <div className="setting-group">
-            <h3>기본 설정</h3>
-            
-            <div className="setting-item">
-              <label htmlFor="default-model">기본 모델:</label>
-              <input
-                id="default-model"
-                type="text"
-                value={defaultModel}
-                onChange={(e) => setDefaultModel(e.target.value)}
-                placeholder="기본 모델명을 입력하세요"
-                className="default-model-input"
-              />
+          <section className="settings__section">
+            <div className="settings__section-header">
+              <h6 className="settings__section-title">기본 설정</h6>
             </div>
-            
-            <button onClick={handleSaveDefaults} className="save-btn">
-              기본 설정 저장
-            </button>
-          </div>
+            <div className="settings__section-content">
+              <div className="form-group">
+                <label className="form-label" htmlFor="default-model">기본 모델</label>
+                <input
+                  id="default-model"
+                  type="text"
+                  className="form-control"
+                  value={defaultModel}
+                  onChange={(e) => setDefaultModel(e.target.value)}
+                  placeholder="기본 모델명을 입력하세요"
+                />
+              </div>
+              <div className="btn-group">
+                <button onClick={handleSaveDefaults} className="btn btn--secondary">
+                  기본 설정 저장
+                </button>
+              </div>
+            </div>
+          </section>
 
           {/* 연결 테스트 */}
-          <div className="setting-group">
-            <h3>연결 테스트</h3>
-            
-            <div className="test-buttons">
-              <button onClick={handleTestConnection} className="test-btn">
-                API 연결 테스트
-              </button>
-              
-              <button onClick={handleTestIndexedDB} className="test-btn">
-                IndexedDB 테스트
-              </button>
-              
-              <button onClick={handleClearIndexedDB} className="test-btn danger">
-                데이터 초기화
-              </button>
+          <section className="settings__section">
+            <div className="settings__section-header">
+              <h6 className="settings__section-title">연결 테스트</h6>
             </div>
-            
-            {connectionStatus && (
-              <div className={`connection-status ${connectionOk ? 'success' : 'error'}`}>
-                <i className={`oi ${connectionOk ? 'oi-check' : 'oi-warning'}`}></i>
-                {connectionStatus}
+            <div className="settings__section-content">
+              <div className="btn-group">
+                <button onClick={handleTestConnection} className="btn btn--secondary">
+                  API 연결 테스트
+                </button>
+                <button onClick={handleTestIndexedDB} className="btn btn--secondary">
+                  IndexedDB 테스트
+                </button>
+                <button onClick={handleClearIndexedDB} className="btn btn--danger">
+                  데이터 초기화
+                </button>
               </div>
-            )}
-          </div>
+              {connectionStatus && (
+                <div className={`connection-status ${connectionOk ? 'success' : 'error'}`}>
+                  <i className={`oi ${connectionOk ? 'oi-check' : 'oi-warning'}`}></i>
+                  {connectionStatus}
+                </div>
+              )}
+            </div>
+          </section>
 
           {/* 저장 상태 */}
           {saveStatus && (

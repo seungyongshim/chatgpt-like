@@ -184,3 +184,23 @@ $message-gap: 8px !default;
 $message-animation-duration: 0.3s !default;
 $message-hover-scale: 1.02 !default;
 $message-fade-in-duration: 0.4s !default;
+
+// Touch targets and mobile sizing
+$touch-target-min: 44px !default; // Minimum recommended touch target
+$touch-target-comfortable: 48px !default; // Larger, comfortable touch target
+$mobile-button-height: 48px !default; // Default mobile button height
+
+// Mobile viewport/keyboard heuristics
+$mobile-keyboard-threshold: 60vh !default; // Below this height, assume keyboard is open
+$mobile-scroll-padding-bottom: 120px !default; // Extra padding to keep focused inputs visible
+
+// Message action button sizing
+$message-action-min-size: 32px !default; // Minimum size for action buttons
+
+// Mobile-specific message sizing
+$message-padding-mobile: 12px 14px !default;
+$message-margin-mobile: 12px 0 !default;
+$message-max-width-mobile: 85% !default;
+$message-max-width-mobile-lg: 95% !default;
+$message-line-height-mobile: 1.6 !default;
+$message-font-size-mobile: 1rem !default; // 16px

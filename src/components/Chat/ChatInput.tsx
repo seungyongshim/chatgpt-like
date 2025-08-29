@@ -21,6 +21,7 @@ const ChatInput = () => {
   const [isResizing, setIsResizing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const resizeRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // userInput 변경 시 로컬 상태도 업데이트
   useEffect(() => {
@@ -68,6 +69,27 @@ const ChatInput = () => {
   useEffect(() => {
     autoResize();
   }, [localInput, textareaHeight]);
+
+  // 입력 컨테이너 높이를 CSS 변수로 반영하여 컨텐츠 하단 패딩과 동기화
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const updateVar = () => {
+      const h = el.getBoundingClientRect().height;
+      document.documentElement.style.setProperty('--chat-input-h', `${Math.ceil(h)}px`);
+    };
+
+    updateVar();
+
+    const ro = new ResizeObserver(() => updateVar());
+    ro.observe(el);
+
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty('--chat-input-h');
+    };
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -127,7 +149,7 @@ const ChatInput = () => {
   };
 
   return (
-    <div className="chat-input-container">
+    <div className="chat-input-container" ref={containerRef}>
       {error && (
         <div className="error-message">
           <i className="oi oi-warning"></i>

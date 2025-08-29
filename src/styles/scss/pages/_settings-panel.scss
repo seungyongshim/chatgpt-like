@@ -50,7 +50,8 @@
 
         // Tablet and up: Centered modal dialog
         @include tablet-up {
-            @extend .card;
+            // Use mixin instead of @extend to avoid cross-media extend issues
+            @include card-style();
             width: 90%;
             max-width: 600px;
             max-height: 85vh;

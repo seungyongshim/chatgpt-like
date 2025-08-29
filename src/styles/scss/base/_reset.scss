@@ -17,7 +17,7 @@ html {
     // Enhanced mobile support
     height: 100vh;
     height: 100dvh; // Dynamic viewport height
-    height: var(--vh, 1vh) * 100; // Custom property fallback
+    height: calc(var(--vh, 1vh) * 100); // Custom property fallback
 
     // Touch optimization
     -webkit-text-size-adjust: 100%;
