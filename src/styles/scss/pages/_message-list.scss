@@ -136,7 +136,7 @@
     max-width: 80px;
 
     .typing-bubble {
-        // Includes first, then wrap declarations in & {} to opt into new behavior
+        // Includes first; declarations are wrapped to opt into new behavior
         @include typing-indicator;
         @include message-bubble-assistant;
 

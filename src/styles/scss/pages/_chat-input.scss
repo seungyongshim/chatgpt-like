@@ -59,7 +59,15 @@
 
 // Model selection dropdown
 @mixin model-control-shared {
-    // Include mixin and responsive nested rules first
+    // Base declarations first in & {}, then nested rules
+    & {
+        flex: 1;
+        min-width: 150px;
+        max-width: 200px;
+        font-size: 0.875rem;
+        padding: spacing(2) spacing(3);
+    }
+
     @include form-control-style;
 
     @include media-breakpoint-down(md) {
@@ -76,15 +84,6 @@
         background-color: var(--bg-primary);
         border: 1px solid var(--border-color);
         border-radius: $border-radius-sm;
-    }
-
-    // Then wrap base declarations to opt into new behavior after nested rules
-    & {
-        flex: 1;
-        min-width: 150px;
-        max-width: 200px;
-        font-size: 0.875rem;
-        padding: spacing(2) spacing(3);
     }
 }
 

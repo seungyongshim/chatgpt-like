@@ -118,8 +118,10 @@
 // Form select
 
 .form-select {
+    // Include responsive mixin first (may emit nested rules)
+    @include form-control-style();
 
-    // Put declarations first, then include mixin (which may emit nested rules) to avoid mixed-decls warnings
+    // Then wrap declarations to opt into the new behavior after nested rules
     & {
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
         background-repeat: no-repeat;
@@ -131,8 +133,6 @@
     &:focus {
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23007bff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
     }
-
-    @include form-control-style();
 }
 
 // Form range

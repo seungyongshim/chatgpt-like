@@ -435,8 +435,6 @@
         transition: all $message-animation-duration ease;
         position: relative;
         font-size: $message-font-size-mobile; // 16px to prevent iOS zoom
-        // Place animation here to avoid mixed-decls warning after nested rules
-        animation: fadeInMessage $message-fade-in-duration ease-out;
     }
 
     // Enhanced mobile text handling
@@ -462,7 +460,10 @@
         line-height: $line-height-base;
     }
 
-    // Smooth animation already applied in base & {} block
+    // Apply animation at the end to avoid mixed-decls after nested rules
+    & {
+        animation: fadeInMessage $message-fade-in-duration ease-out;
+    }
 
     // Subtle hover effect removed for mobile-first consistency (no scale on hover)
     // Intentionally no transform scale on hover to avoid motion and layout shift
@@ -1142,9 +1143,11 @@
 
 // Typing indicator mixin
 @mixin typing-indicator {
-    display: flex;
-    gap: 4px;
-    padding: 16px;
+    & {
+        display: flex;
+        gap: 4px;
+        padding: 16px;
+    }
 
     .dot {
         width: 8px;
