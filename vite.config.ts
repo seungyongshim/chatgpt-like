@@ -6,6 +6,13 @@ import react from '@vitejs/plugin-react'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const process: any;
 
+// Sass deprecation warnings silencing for build output cleanliness
+// Note: We already migrated code; these silence messages from upstream tooling (legacy-js-api, mixed-decls)
+process.env.SASS_SILENCE_DEPRECATIONS = [
+  'legacy-js-api',
+  'mixed-decls',
+].join(',');
+
 // GitHub Actions에서 빌드되는 경우 리포지토리 이름을 base로 사용
 // 예: seungyongshim/chatgpt-like -> /chatgpt-like/
 const ghBase = process.env.GITHUB_REPOSITORY

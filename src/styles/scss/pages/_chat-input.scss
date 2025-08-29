@@ -58,17 +58,9 @@
 }
 
 // Model selection dropdown
-%model-control-shared {
-    // Include mixin first, then wrap base declarations to opt into new behavior
+@mixin model-control-shared {
+    // Include mixin and responsive nested rules first
     @include form-control-style;
-
-    & {
-        flex: 1;
-        min-width: 150px;
-        max-width: 200px;
-        font-size: 0.875rem;
-        padding: spacing(2) spacing(3);
-    }
 
     @include media-breakpoint-down(md) {
         min-width: 120px;
@@ -85,10 +77,19 @@
         border: 1px solid var(--border-color);
         border-radius: $border-radius-sm;
     }
+
+    // Then wrap base declarations to opt into new behavior after nested rules
+    & {
+        flex: 1;
+        min-width: 150px;
+        max-width: 200px;
+        font-size: 0.875rem;
+        padding: spacing(2) spacing(3);
+    }
 }
 
 .model-select {
-    @extend %model-control-shared;
+    @include model-control-shared;
 
     option {
         background-color: var(--bg-primary);
@@ -102,7 +103,7 @@
 
 // Model input for manual entry
 .model-input {
-    @extend %model-control-shared;
+    @include model-control-shared;
 }
 
 // Effective model display
