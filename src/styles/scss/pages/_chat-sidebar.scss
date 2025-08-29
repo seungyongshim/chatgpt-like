@@ -4,6 +4,7 @@
 // 이 파일의 BEM 셀렉터(chat-sidebar__*)는 과거 설계로, 필요 시 컴포넌트 클래스명을 통일하거나
 // 여기 스타일을 실제 클래스에 맞게 이관하세요.
 // ==========================================================================
+@use "../abstracts" as *;
 
 .chat-sidebar {
 
@@ -26,9 +27,22 @@
     }
 
     &__mobile-menu-btn {
-        @extend .btn;
-        @extend .btn--ghost;
+        // Inline ghost button styles to avoid @extend
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: $border-radius;
         padding: spacing(2) spacing(3);
+        cursor: pointer;
+        transition: $transition-base;
+
+        &:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
     }
 
     &__mobile-title {
@@ -104,9 +118,14 @@
             right: spacing(2);
             top: 50%;
             transform: translateY(-50%);
-            @extend .btn;
-            @extend .btn--ghost;
-            @extend .btn--sm;
+            // Inline small ghost button styles
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: $border-radius-sm;
             color: color(danger);
             opacity: 0.7;
             transition: $transition-base;
@@ -114,7 +133,8 @@
             padding: spacing(1);
 
             &:hover {
-                background: lighten(color(danger), 45%);
+                // keep using mixin color() to fetch from palette, then adjust via sass color module in components if needed
+                background: rgba(220, 53, 69, 0.15);
                 opacity: 1;
             }
         }

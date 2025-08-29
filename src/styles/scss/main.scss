@@ -1,30 +1,13 @@
 // ==========================================================================
-// Main SCSS File - ChatGPT-like React App
+// Main SCSS File - ChatGPT-like React App (Sass modules)
 // ==========================================================================
-
-// 1. Bootstrap CSS - External dependency
-@import "../css/bootstrap/bootstrap.min.css";
-// 1-1. Highlight.js default style for code blocks
-// 1-1. Highlight.js default style for code blocks (Vite: use package path)
-@import "highlight.js/styles/github.css";
-
-// 2. Abstracts - Variables, functions, mixins (no output)
-@import "abstracts/variables";
-@import "abstracts/mixins";
-
-// 3. Base - Reset, typography, global styles
-@import "base/reset";
-@import "base/typography";
-
-// 4. Layout - Grid system, layout components
-@import "layout/layout";
-
-// 5. Components - Reusable UI components
-@import "components/components";
-
-// 6. Pages - Page-specific styles
-@import "pages/chat-input";
-@import "pages/chat-sidebar";
-@import "pages/message-list";
-@import "pages/settings-panel";
-@import "pages/usage-info";
+@use "abstracts" as *;
+@use "base/reset";
+@use "base/typography";
+@use "layout/layout";
+@use "components/components";
+@use "pages/chat-input";
+@use "pages/chat-sidebar";
+@use "pages/message-list";
+@use "pages/settings-panel";
+@use "pages/usage-info";

@@ -1,35 +1,40 @@
 // ==========================================================================
 // Mixins - Reusable SCSS Mixins for ChatGPT-like React App
 // ==========================================================================
+@use "sass:map";
+@use "sass:color" as s-color;
+@use "sass:meta";
+@use "sass:string";
+@use "variables" as *;
 
 // Theme function - Get theme color value
 @function theme-color($key, $theme: 'light') {
     @if $theme =='light' {
-        @return map-get($light-theme, $key);
+        @return map.get($light-theme, $key);
     }
 
     @else {
-        @return map-get($dark-theme, $key);
+        @return map.get($dark-theme, $key);
     }
 }
 
 // Get color from palette
 @function color($key) {
-    @return map-get($colors, $key);
+    @return map.get($colors, $key);
 }
 
 // Get spacing value
 @function spacing($key) {
-    @return map-get($spacers, $key);
+    @return map.get($spacers, $key);
 }
 
 // Advanced color functions
-@function lighten-color($color, $amount: 10%) {
-    @return lighten($color, $amount);
+@function lighten-color($c, $amount: 10%) {
+    @return s-color.adjust($c, $lightness: $amount);
 }
 
-@function darken-color($color, $amount: 10%) {
-    @return darken($color, $amount);
+@function darken-color($c, $amount: 10%) {
+    @return s-color.adjust($c, $lightness: -$amount);
 }
 
 @function alpha-color($color, $alpha: 0.5) {
@@ -39,11 +44,11 @@
 // Auto-generate color variations
 @function color-variant($base-color, $variant: 'normal') {
     @if $variant =='light' {
-        @return lighten($base-color, 20%);
+    @return s-color.adjust($base-color, $lightness: 20%);
     }
 
     @else if $variant =='dark' {
-        @return darken($base-color, 20%);
+    @return s-color.adjust($base-color, $lightness: -20%);
     }
 
     @else if $variant =='muted' {
@@ -60,7 +65,7 @@
 
 // Mobile first approach - styles written for mobile, enhanced for larger screens
 @mixin mobile-up($name) {
-    $min: map-get($breakpoints, $name);
+    $min: map.get($breakpoints, $name);
 
     @if $min !=0 {
         @media (min-width: $min) {
@@ -82,7 +87,7 @@
 
 // For cases where we need max-width (rarely used in mobile-first)
 @mixin mobile-down($name) {
-    $max: map-get($breakpoints, $name) - 0.02px;
+    $max: map.get($breakpoints, $name) - 0.02px;
 
     @media (max-width: $max) {
         @content;
@@ -98,8 +103,8 @@
 
 // Between breakpoints
 @mixin mobile-between($lower, $upper) {
-    $min: map-get($breakpoints, $lower);
-    $max: map-get($breakpoints, $upper) - 0.02px;
+    $min: map.get($breakpoints, $lower);
+    $max: map.get($breakpoints, $upper) - 0.02px;
 
     @if $min !=0 {
         @media (min-width: $min) and (max-width: $max) {
@@ -121,7 +126,7 @@
 
 // Mobile-specific utilities
 @mixin mobile-only {
-    $max: map-get($breakpoints, sm) - 0.02px;
+    $max: map.get($breakpoints, sm) - 0.02px;
 
     @media (max-width: $max) {
         @content;
@@ -185,27 +190,27 @@
         // Remove hover effects on touch devices
         &:active {
             transform: scale(0.98);
-            background-color: if(str-index(inspect($bg-color), 'var('), $bg-color, darken($bg-color, 8%));
+            background-color: if(string.index(meta.inspect($bg-color), 'var('), $bg-color, s-color.adjust($bg-color, $lightness: -8%));
         }
     }
 
     // Non-touch hover effects
     @include non-touch-device {
         &:hover:not(:disabled) {
-            @if str-index(inspect($bg-color), 'var(') {
+            @if string.index(meta.inspect($bg-color), 'var(') {
                 filter: brightness(0.9);
             }
 
             @else {
-                background-color: darken($bg-color, 5%);
+                background-color: s-color.adjust($bg-color, $lightness: -5%);
             }
 
-            @if str-index(inspect($border), 'var(') {
+            @if string.index(meta.inspect($border), 'var(') {
                 // Don't modify CSS variable borders in hover
             }
 
             @else {
-                border-color: darken($border, 5%);
+                border-color: s-color.adjust($border, $lightness: -5%);
             }
 
             transform: translateY(-1px);
@@ -327,14 +332,13 @@
         border-radius: $border-radius-pill;
 
         &:hover {
-
-            // For CSS variables, use filter instead of darken()
-            @if str-index(inspect($thumb-color), 'var(') {
+            // For CSS variables, use filter instead of color adjustments
+            @if string.index(meta.inspect($thumb-color), 'var(') {
                 filter: brightness(0.8);
             }
 
             @else {
-                background: darken($thumb-color, 10%);
+                background: s-color.adjust($thumb-color, $lightness: -10%);
             }
         }
     }
@@ -347,6 +351,29 @@
     &:hover {
         transform: translateY($translate-y);
         box-shadow: $shadow;
+    }
+}
+
+// Elevation utility using standard shadow tokens
+@mixin elevation($level: md) {
+    @if $level ==sm {
+        box-shadow: $shadow-sm;
+    }
+
+    @else if $level ==md {
+        box-shadow: $shadow-md;
+    }
+
+    @else if $level ==lg {
+        box-shadow: $shadow-lg;
+    }
+
+    @else if $level ==xl {
+        box-shadow: $shadow-xl;
+    }
+
+    @else {
+        box-shadow: $level; // allow custom shadow value
     }
 }
 
@@ -393,18 +420,20 @@
 // Message bubble mixins - Mobile First Approach
 @mixin message-bubble-base {
     // Mobile-first base styles
-    padding: $message-padding-mobile;
-    border-radius: $message-border-radius;
-    margin: $message-margin-mobile;
-    max-width: $message-max-width-mobile;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word; // Better long text handling
-    hyphens: auto;
-    line-height: $message-line-height-mobile;
-    transition: all $message-animation-duration ease;
-    position: relative;
-    font-size: $message-font-size-mobile; // 16px to prevent iOS zoom
+    & {
+        padding: $message-padding-mobile;
+        border-radius: $message-border-radius;
+        margin: $message-margin-mobile;
+        max-width: $message-max-width-mobile;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word; // Better long text handling
+        hyphens: auto;
+        line-height: $message-line-height-mobile;
+        transition: all $message-animation-duration ease;
+        position: relative;
+        font-size: $message-font-size-mobile; // 16px to prevent iOS zoom
+    }
 
     // Enhanced mobile text handling
     @include mobile-only {
@@ -430,7 +459,7 @@
     }
 
     // Smooth animation for new messages
-    animation: fadeInMessage $message-fade-in-duration ease-out;
+    & { animation: fadeInMessage $message-fade-in-duration ease-out; }
 
     // Subtle hover effect removed for mobile-first consistency (no scale on hover)
     // Intentionally no transform scale on hover to avoid motion and layout shift
@@ -444,11 +473,13 @@
 
 @mixin message-bubble-user {
     @include message-bubble-base;
-    background: var(--msg-user-bg);
-    color: var(--msg-user-text, white);
-    align-self: flex-end;
-    margin-left: auto;
-    border-bottom-right-radius: $message-border-radius-sm;
+    & {
+        background: var(--msg-user-bg);
+        color: var(--msg-user-text, white);
+        align-self: flex-end;
+        margin-left: auto;
+        border-bottom-right-radius: $message-border-radius-sm;
+    }
 
     // Mobile: Better text contrast and readability
     @include mobile-only {
@@ -473,12 +504,14 @@
 
 @mixin message-bubble-assistant {
     @include message-bubble-base;
-    background: var(--msg-assistant-bg);
-    color: var(--msg-assistant-text, var(--text-primary));
-    align-self: flex-start;
-    margin-right: auto;
-    border-bottom-left-radius: $message-border-radius-sm;
-    border: 1px solid var(--border-color);
+    & {
+        background: var(--msg-assistant-bg);
+        color: var(--msg-assistant-text, var(--text-primary));
+        align-self: flex-start;
+        margin-right: auto;
+        border-bottom-left-radius: $message-border-radius-sm;
+        border: 1px solid var(--border-color);
+    }
 
     // Mobile: Enhanced readability and interaction
     @include mobile-only {
@@ -506,15 +539,17 @@
 
 @mixin message-bubble-system {
     @include message-bubble-base;
-    background: var(--msg-system-bg);
-    border: 2px solid var(--msg-system-border);
-    color: var(--text-primary);
-    align-self: center;
-    margin-left: auto;
-    margin-right: auto;
-    border-radius: $border-radius-lg;
-    padding-top: 28px;
-    position: relative;
+    & {
+        background: var(--msg-system-bg);
+        border: 2px solid var(--msg-system-border);
+        color: var(--text-primary);
+        align-self: center;
+        margin-left: auto;
+        margin-right: auto;
+        border-radius: $border-radius-lg;
+        padding-top: 28px;
+        position: relative;
+    }
 
     // Mobile: Use even more width for system messages
     @include mobile-only {

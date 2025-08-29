@@ -1,6 +1,7 @@
 // ==========================================================================
 // Variables - SCSS Variables for ChatGPT-like React App
 // ==========================================================================
+@use "sass:map";
 
 // Color palette
 $colors: (
@@ -37,13 +38,13 @@ $colors: (
 
 // Theme colors
 $light-theme: (
-    bg-primary: map-get($colors, white),
-    bg-secondary: map-get($colors, gray-50),
-    bg-tertiary: map-get($colors, gray-100),
-    text-primary: map-get($colors, gray-800),
-    text-secondary: map-get($colors, gray-500),
+    bg-primary: map.get($colors, white),
+    bg-secondary: map.get($colors, gray-50),
+    bg-tertiary: map.get($colors, gray-100),
+    text-primary: map.get($colors, gray-800),
+    text-secondary: map.get($colors, gray-500),
     text-muted: #888,
-    border-color: map-get($colors, gray-200),
+    border-color: map.get($colors, gray-200),
     border-light: #eee,
     shadow: 0 2px 4px rgba(0, 0, 0, 0.05),
     overlay-bg: rgba(0, 0, 0, 0.5),
@@ -58,17 +59,17 @@ $light-theme: (
     system-badge-bg: #f59e0b,
 
     // Usage info colors
-    usage-bg: linear-gradient(135deg, map-get($colors, gray-50) 0%, map-get($colors, gray-100) 100%),
-    usage-border: map-get($colors, gray-200),
-    usage-text: map-get($colors, gray-500),
+    usage-bg: linear-gradient(135deg, map.get($colors, gray-50) 0%, map.get($colors, gray-100) 100%),
+    usage-border: map.get($colors, gray-200),
+    usage-text: map.get($colors, gray-500),
 
     // Button colors
-    btn-primary-bg: map-get($colors, primary),
-    btn-primary-border: map-get($colors, primary-dark),
-    link-color: map-get($colors, link),
+    btn-primary-bg: map.get($colors, primary),
+    btn-primary-border: map.get($colors, primary-dark),
+    link-color: map.get($colors, link),
 
     // Error colors
-    error-color: map-get($colors, error),
+    error-color: map.get($colors, error),
     error-ui-bg: lightyellow
 );
 
@@ -76,7 +77,7 @@ $dark-theme: (
     bg-primary: #1a1a1a,
     bg-secondary: #2d2d2d,
     bg-tertiary: #404040,
-    text-primary: map-get($colors, white),
+    text-primary: map.get($colors, white),
     text-secondary: #b0b0b0,
     text-muted: #888,
     border-color: #404040,
@@ -101,10 +102,10 @@ $dark-theme: (
     // Button colors - dark theme
     btn-primary-bg: #4dabf7,
     btn-primary-border: #339af0,
-    link-color: map-get($colors, link-dark),
+    link-color: map.get($colors, link-dark),
 
     // Error colors - dark theme
-    error-color: map-get($colors, error-dark),
+    error-color: map.get($colors, error-dark),
     error-ui-bg: #5c2e04
 );
 
@@ -157,6 +158,12 @@ $border-radius-pill: 50rem !default;
 $transition-base: all 0.2s ease !default;
 $transition-fade: opacity 0.15s linear !default;
 $transition-collapse: height 0.35s ease !default;
+
+// Shadows (normalized scales for reuse)
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1) !default;
+$shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15) !default;
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2) !default;
+$shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.3) !default;
 
 // Z-index
 $zindex-dropdown: 1000 !default;

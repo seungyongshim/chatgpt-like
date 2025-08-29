@@ -1,6 +1,7 @@
 // ==========================================================================
 // UsageInfo Component - Usage Information Display Styles
 // ==========================================================================
+@use "../abstracts" as *;
 
 .usage-info {
 
@@ -52,14 +53,24 @@
         }
 
         &-bar {
-            @extend .progress;
+            // Inline .progress styles to avoid cross-file @extend dependency
+            display: flex;
             height: 6px;
+            overflow: hidden;
+            font-size: 0.75rem;
             background-color: rgba(0, 0, 0, 0.1);
             border-radius: 3px;
-            overflow: hidden;
             box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 
             .progress__bar {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                overflow: hidden;
+                color: white;
+                text-align: center;
+                white-space: nowrap;
+                background-color: var(--btn-primary-bg);
                 border-radius: 3px;
                 background-image: linear-gradient(45deg,
                         rgba(255, 255, 255, 0.15) 25%,
@@ -71,6 +82,7 @@
                         transparent);
                 background-size: 1rem 1rem;
                 animation: progress-bar-stripes 1s linear infinite;
+                transition: width 0.6s ease;
             }
         }
 
@@ -85,19 +97,25 @@
 
     // Refresh button
     &__refresh-btn {
-        @extend .btn;
-        @extend .btn--ghost;
-        @extend .btn--icon;
-        @extend .btn--sm;
+        // Inline essential .btn styles to avoid @extend across modules
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+        border: 1px solid var(--border-color);
+        background: transparent;
+        color: var(--text-secondary);
         border-radius: $border-radius-pill;
         width: 32px;
         height: 32px;
+        padding: 0;
         transition: $transition-base;
 
         &:hover {
             color: color(info) !important;
             background-color: rgba(color(info), 0.1);
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
 
         &:disabled {
@@ -150,12 +168,4 @@
     }
 }
 
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
-}
+// Use global @keyframes spin defined in components

@@ -1,6 +1,7 @@
 // ==========================================================================
 // MessageList Component - ChatGPT-style Message Display
 // ==========================================================================
+@use "../abstracts" as *;
 
 .message-list {
     flex: 1;
@@ -14,23 +15,8 @@
     // Fade in animation for the entire list
     animation: fadeIn 0.5s ease-out;
 
-    // Custom scrollbar for better UX
-    &::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: var(--border-color);
-        border-radius: 3px;
-
-        &:hover {
-            background: var(--text-secondary);
-        }
-    }
+    // Custom scrollbar for better UX (use mixin to avoid duplication)
+    @include custom-scrollbar(6px, transparent, var(--border-color));
 
     // 고정 입력창과 겹치지 않도록 하단 여백 확보
     padding-bottom: calc(var(--chat-input-h, #{$chat-input-height}) + #{spacing(2)});
@@ -150,8 +136,9 @@
     max-width: 80px;
 
     .typing-bubble {
-        @include message-bubble-assistant;
+        // Put base declarations first to avoid mixed-decls warnings
         @include typing-indicator;
+        @include message-bubble-assistant;
         border-bottom-left-radius: $message-border-radius-sm;
         padding: spacing(2) spacing(3);
         min-height: auto;
@@ -201,6 +188,7 @@
 
             &:hover {
                 background: var(--bg-tertiary);
+                @include elevation(sm);
             }
         }
     }

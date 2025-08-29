@@ -1,33 +1,30 @@
 // ==========================================================================
 // Typography - Mobile-First Font Styles with Accessibility Features
 // ==========================================================================
+@use "../abstracts" as *;
+@use "sass:string";
 
 // Base typography - Mobile First with Accessibility
 body {
+    // Declarations first (to avoid mixed-decls warning)
     font-family: $font-family-base;
     font-weight: $font-weight-normal;
     line-height: $line-height-base;
     color: var(--text-primary);
-
-    // Mobile: 16px minimum to prevent iOS zoom
-    font-size: 1rem; // 16px
+    font-size: 1rem; // 16px, Mobile minimum to prevent iOS zoom
+    text-rendering: optimizeLegibility; // Accessibility: Enhanced text rendering
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-touch-callout: default; // Better text selection on touch devices
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
 
     // Tablet and up: Standard size
     @include tablet-up {
         font-size: $font-size-base;
     }
-
-    // Accessibility: Enhanced text rendering
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-
-    // Better text selection on touch devices
-    -webkit-touch-callout: default;
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
-    user-select: text;
 }
 
 // Headings - Mobile First with Accessibility
@@ -331,7 +328,7 @@ pre {
 .message-text {
     // Mobile: Optimized readability with fluid typography
     font-size: clamp(1rem, 2.5vw + 0.5rem, 1.1rem); // Fluid 16-17.6px
-    line-height: clamp(1.5, unquote("calc(1.4 + 0.5vw)"), 1.7);
+    line-height: clamp(1.5, string.unquote("calc(1.4 + 0.5vw)"), 1.7);
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
@@ -376,12 +373,6 @@ pre {
     }
 }
 
-// Accessibility: Focus-visible styles for better keyboard navigation
-:focus-visible {
-    outline: 2px solid var(--focus-color, var(--btn-primary-bg));
-    outline-offset: 2px;
-    border-radius: $border-radius-sm;
-}
 
 // Accessibility: Skip links for screen readers
 .skip-link {

@@ -1,6 +1,7 @@
 // ==========================================================================
 // SettingsPanel Component - Mobile First Settings Modal
 // ==========================================================================
+@use "../abstracts" as *;
 
 .settings {
 
@@ -56,7 +57,7 @@
             max-width: 600px;
             max-height: 85vh;
             border-radius: $border-radius-lg;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            @include elevation(xl);
         }
 
         // Custom scrollbar
@@ -84,7 +85,7 @@
 
             // Enhanced border for mobile
             border-bottom: 2px solid var(--border-color);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            @include elevation(sm);
         }
 
         @include tablet-up {
