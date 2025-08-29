@@ -164,7 +164,7 @@
         }
 
         &:hover {
-            transform: scale(1.1);
+            // No scale on hover
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
     }
@@ -365,7 +365,7 @@
 
     &:hover:not(:disabled) {
         filter: brightness(0.9);
-        transform: translateY(-1px);
+        // No translate/scale on hover for mobile-first
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
 

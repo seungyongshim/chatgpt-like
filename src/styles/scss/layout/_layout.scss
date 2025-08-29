@@ -128,19 +128,7 @@
     // 하단 입력창 여백은 스크롤 컨테이너(.message-list)로 이관
 }
 
-// Message list container
-.message-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: spacing(4);
-    @include flex-column;
-    gap: spacing(4);
-    @include custom-scrollbar();
-
-    // 입력창이 고정(fixed)되어 있어 스크롤 영역 하단이 가려지지 않도록 여백 보장
-    // ChatInput.tsx에서 ResizeObserver로 --chat-input-h 를 갱신함
-    padding-bottom: calc(var(--chat-input-h, #{$chat-input-height}) + #{spacing(3)});
-}
+// Message list container styles are defined in pages/_message-list.scss to avoid duplication
 
 // Chat input container: 실제 스타일은 pages/_chat-input.scss 에 정의됨 (sticky)
 
@@ -163,7 +151,7 @@
 
     &:hover {
         background: var(--bg-secondary);
-        transform: scale(1.1);
+        // No scale on hover for consistency
     }
 
     &:focus {

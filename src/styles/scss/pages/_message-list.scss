@@ -126,23 +126,7 @@
             margin-left: spacing(2);
         }
 
-        // Character count for assistant messages
-        &::after {
-            content: attr(data-char-count) ' chars';
-            position: absolute;
-            bottom: -18px;
-            left: spacing(2);
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            pointer-events: none;
-        }
-
-        // Remove hover-only visibility for char count to reduce hover dependency
-        &::after {
-            opacity: 0.7;
-        }
+        // Removed hover-dependent character count indicator for mobile-first simplicity
     }
 
     // System message styles
@@ -217,8 +201,6 @@
 
             &:hover {
                 background: var(--bg-tertiary);
-                transform: translateY(-1px);
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             }
         }
     }
@@ -264,17 +246,7 @@
         padding: spacing(2);
         gap: spacing(1);
 
-        .message-item {
-
-            &.message-user .message-item__content,
-            &.message-assistant .message-item__content {
-                max-width: 85%;
-            }
-
-            &.message-system .message-item__content {
-                max-width: 95%;
-            }
-        }
+        // BEM 변형 셀렉터(.message-item__content) 사용 안함 → 정리
 
         .welcome-message {
             padding: spacing(4) spacing(2);
@@ -290,27 +262,7 @@
 }
 
 @include media-breakpoint-down(sm) {
-    .message-list {
-        .message-item {
-
-            &.message-user .message-item__content,
-            &.message-assistant .message-item__content {
-                max-width: 90%;
-                font-size: 0.9rem;
-            }
-
-            &__header {
-                .message-role {
-                    font-size: 0.7rem;
-                }
-
-                .message-actions .btn {
-                    padding: 2px 6px;
-                    font-size: 0.7rem;
-                }
-            }
-        }
-    }
+    // 모바일 전용 추가 스타일이 필요하면 이후에 보강
 }
 
 // High contrast mode support
