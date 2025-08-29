@@ -11,7 +11,7 @@ export class ChatService {
 
   constructor(config: ChatServiceConfig = {}) {
     this.baseUrl = config.baseUrl || 'http://localhost:4141';
-    this.timeout = config.timeout || 30 * 60 * 1000; // 30분
+    this.timeout = config.timeout || 5 * 60 * 1000; // 5분
   }
 
   // 모델 목록 조회
@@ -38,7 +38,7 @@ export class ChatService {
         const models = data.data
           .map((item: any) => item.id)
           .filter((id: string) => id && typeof id === 'string');
-        
+
         if (models.length > 0) {
           return Array.from(new Set(models)); // 중복 제거
         }
@@ -93,7 +93,7 @@ export class ChatService {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-    
+
     // 사용자가 제공한 signal과 타임아웃 signal을 결합
     const combinedSignal = signal ? this.combineSignals([signal, controller.signal]) : controller.signal;
 
@@ -124,8 +124,12 @@ export class ChatService {
       try {
         while (true) {
           const { done, value } = await reader.read();
-          
-          if (done) break;
+
+          if (done) {
+            console.log('Stream completed normally');
+            break;
+          }
+
           if (combinedSignal.aborted) {
             throw new Error('Request was cancelled');
           }
@@ -135,18 +139,29 @@ export class ChatService {
 
           for (const line of lines) {
             if (line.startsWith('data: ')) {
-              const jsonPart = line.slice(6); // "data: " 이후 부분
-              
-              if (jsonPart.trim() === '[DONE]') {
+              const jsonPart = line.slice(6).trim(); // "data: " 이후 부분
+
+              if (jsonPart === '[DONE]') {
                 return;
               }
-              
+
+              if (jsonPart === '') {
+                continue; // 빈 데이터 라인 건너뛰기
+              }
+
               try {
                 const data = JSON.parse(jsonPart);
-                
-                // OpenAI 스트리밍 형식: choices[0].delta.content
+
+                // 스트림 종료 조건 체크
                 if (data.choices && Array.isArray(data.choices) && data.choices.length > 0) {
                   const firstChoice = data.choices[0];
+
+                  // finish_reason이 있으면 스트림 종료
+                  if (firstChoice.finish_reason) {
+                    return;
+                  }
+
+                  // 컨텐츠가 있으면 yield
                   if (firstChoice.delta && firstChoice.delta.content) {
                     const content = firstChoice.delta.content;
                     if (typeof content === 'string' && content.length > 0) {
@@ -158,6 +173,7 @@ export class ChatService {
                 }
               } catch (parseError) {
                 // JSON 파싱 오류는 무시하고 계속 진행
+                console.warn('Failed to parse streaming data:', jsonPart, parseError);
                 continue;
               }
             }
@@ -168,8 +184,12 @@ export class ChatService {
       }
     } catch (error) {
       clearTimeout(timeoutId);
+      console.error('Streaming error:', error);
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Request was cancelled');
+      }
+      if (error instanceof Error && error.message.includes('NetworkError')) {
+        throw new Error('Network connection lost during streaming');
       }
       throw error;
     }
@@ -198,11 +218,11 @@ export class ChatService {
       // quota_snapshots.premium_interactions 구조에서 정보 추출
       if (data.quota_snapshots?.premium_interactions) {
         const premium = data.quota_snapshots.premium_interactions;
-        
+
         if (typeof premium.remaining === 'number') {
           usageInfo.premiumRequestsLeft = premium.remaining;
         }
-        
+
         if (typeof premium.entitlement === 'number') {
           usageInfo.totalPremiumRequests = premium.entitlement;
         }
@@ -224,9 +244,9 @@ export class ChatService {
   // 여러 AbortSignal을 결합하는 헬퍼 메서드
   private combineSignals(signals: AbortSignal[]): AbortSignal {
     const controller = new AbortController();
-    
+
     const abortHandler = () => controller.abort();
-    
+
     signals.forEach(signal => {
       if (signal.aborted) {
         controller.abort();

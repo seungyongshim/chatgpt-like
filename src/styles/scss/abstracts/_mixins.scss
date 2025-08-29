@@ -55,8 +55,11 @@
     }
 }
 
-// Media query mixin
-@mixin media-breakpoint-up($name) {
+// Mobile First Media Query Mixins
+// ==========================================================================
+
+// Mobile first approach - styles written for mobile, enhanced for larger screens
+@mixin mobile-up($name) {
     $min: map-get($breakpoints, $name);
 
     @if $min !=0 {
@@ -70,7 +73,13 @@
     }
 }
 
-@mixin media-breakpoint-down($name) {
+// Legacy support for existing code
+@mixin media-breakpoint-up($name) {
+    @include mobile-up($name);
+}
+
+// For cases where we need max-width (rarely used in mobile-first)
+@mixin mobile-down($name) {
     $max: map-get($breakpoints, $name) - 0.02px;
 
     @media (max-width: $max) {
@@ -78,7 +87,13 @@
     }
 }
 
-@mixin media-breakpoint-between($lower, $upper) {
+// Legacy support
+@mixin media-breakpoint-down($name) {
+    @include mobile-down($name);
+}
+
+// Between breakpoints
+@mixin mobile-between($lower, $upper) {
     $min: map-get($breakpoints, $lower);
     $max: map-get($breakpoints, $upper) - 0.02px;
 
@@ -95,38 +110,92 @@
     }
 }
 
-// Button mixin
-@mixin button-style($bg-color, $text-color: white, $border-color: null) {
+// Legacy support
+@mixin media-breakpoint-between($lower, $upper) {
+    @include mobile-between($lower, $upper);
+}
+
+// Mobile-specific utilities
+@mixin mobile-only {
+    $max: map-get($breakpoints, sm) - 0.02px;
+
+    @media (max-width: $max) {
+        @content;
+    }
+}
+
+@mixin tablet-up {
+    @include mobile-up(md);
+}
+
+@mixin desktop-up {
+    @include mobile-up(lg);
+}
+
+// Touch device detection
+@mixin touch-device {
+    @media (hover: none) and (pointer: coarse) {
+        @content;
+    }
+}
+
+@mixin non-touch-device {
+    @media (hover: hover) and (pointer: fine) {
+        @content;
+    }
+}
+
+// Mobile-First Button Mixin
+@mixin mobile-button-style($bg-color, $text-color: white, $border-color: null) {
     $border: if($border-color, $border-color, $bg-color);
 
+    // Mobile-first base styles
     background-color: $bg-color;
     color: $text-color;
     border: 1px solid $border;
     border-radius: $border-radius;
     cursor: pointer;
     transition: $transition-base;
+    min-height: $touch-target-min;
+    min-width: $touch-target-min;
+    padding: spacing(2) spacing(3);
+    font-size: 1rem; // 16px to prevent iOS zoom
 
-    &:hover:not(:disabled) {
+    // Touch-specific styles
+    @include touch-device {
+        // Increase touch targets on mobile
+        min-height: $mobile-button-height;
+        padding: spacing(3) spacing(4);
 
-        // For CSS variables, we can't use darken(), so use filter instead
-        @if str-index(inspect($bg-color), 'var(') {
-            filter: brightness(0.9);
+        // Remove hover effects on touch devices
+        &:active {
+            transform: scale(0.98);
+            background-color: if(str-index(inspect($bg-color), 'var('), $bg-color, darken($bg-color, 8%));
         }
+    }
 
-        @else {
-            background-color: darken($bg-color, 5%);
+    // Non-touch hover effects
+    @include non-touch-device {
+        &:hover:not(:disabled) {
+            @if str-index(inspect($bg-color), 'var(') {
+                filter: brightness(0.9);
+            }
+
+            @else {
+                background-color: darken($bg-color, 5%);
+            }
+
+            @if str-index(inspect($border), 'var(') {
+                // Don't modify CSS variable borders in hover
+            }
+
+            @else {
+                border-color: darken($border, 5%);
+            }
+
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
-
-        @if str-index(inspect($border), 'var(') {
-            // Don't modify CSS variable borders in hover
-        }
-
-        @else {
-            border-color: darken($border, 5%);
-        }
-
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
 
     &:disabled {
@@ -137,16 +206,37 @@
     }
 }
 
-// Form control mixin
-@mixin form-control-style() {
+// Legacy button mixin - updated to use mobile-first approach
+@mixin button-style($bg-color, $text-color: white, $border-color: null) {
+    @include mobile-button-style($bg-color, $text-color, $border-color);
+}
+
+// Mobile-First Form Control Mixin
+@mixin mobile-form-control-style() {
+    // Mobile-first base styles
     padding: spacing(3) spacing(4);
     border: 1px solid var(--border-color);
     border-radius: $border-radius;
     background-color: var(--bg-primary);
     color: var(--text-primary);
     font-family: $font-family-base;
-    font-size: $font-size-base;
+    font-size: 1rem; // 16px to prevent iOS zoom
+    line-height: 1.5;
     transition: $transition-base;
+    min-height: $touch-target-min;
+
+    // Enhanced touch targets on mobile
+    @include mobile-only {
+        padding: spacing(3) spacing(4);
+        min-height: $mobile-button-height;
+        font-size: 1rem; // Ensure no zoom on iOS
+    }
+
+    // Larger comfortable sizing on tablets and up
+    @include tablet-up {
+        padding: spacing(3) spacing(4);
+        font-size: $font-size-base;
+    }
 
     &:focus {
         outline: none;
@@ -162,6 +252,11 @@
         opacity: 0.6;
         background-color: var(--bg-secondary);
     }
+}
+
+// Legacy form control mixin
+@mixin form-control-style() {
+    @include mobile-form-control-style();
 }
 
 // Card/Panel mixin
@@ -280,24 +375,59 @@
     }
 }
 
-// Message bubble mixins
+// Message bubble mixins - Mobile First Approach
 @mixin message-bubble-base {
-    padding: $message-padding;
+    // Mobile-first base styles
+    padding: $message-padding-mobile;
     border-radius: $message-border-radius;
-    margin: $message-margin;
-    max-width: $message-max-width;
+    margin: $message-margin-mobile;
+    max-width: $message-max-width-mobile;
     word-wrap: break-word;
-    font-size: $font-size-base;
-    line-height: $line-height-base;
+    overflow-wrap: break-word;
+    word-break: break-word; // Better long text handling
+    hyphens: auto;
+    line-height: $message-line-height-mobile;
     transition: all $message-animation-duration ease;
     position: relative;
+    font-size: $message-font-size-mobile; // 16px to prevent iOS zoom
+
+    // Enhanced mobile text handling
+    @include mobile-only {
+        // Ensure readability on small screens
+        line-height: 1.6;
+        letter-spacing: 0.01em;
+
+        // Better handling of long words and URLs
+        word-break: break-word;
+        overflow-wrap: anywhere;
+
+        // Optimize for touch scrolling
+        -webkit-overflow-scrolling: touch;
+    }
+
+    // Tablet and up: Standard desktop sizing
+    @include tablet-up {
+        padding: $message-padding;
+        margin: $message-margin;
+        max-width: $message-max-width;
+        font-size: $font-size-base;
+        line-height: $line-height-base;
+    }
 
     // Smooth animation for new messages
     animation: fadeInMessage $message-fade-in-duration ease-out;
 
-    // Subtle hover effect
-    &:hover {
-        transform: scale($message-hover-scale);
+    // Subtle hover effect - only on non-touch devices
+    @include non-touch-device {
+        &:hover {
+            transform: scale($message-hover-scale);
+        }
+    }
+
+    // Enhanced focus for accessibility
+    &:focus-within {
+        outline: 2px solid var(--btn-primary-bg);
+        outline-offset: 2px;
     }
 }
 
@@ -308,6 +438,26 @@
     align-self: flex-end;
     margin-left: auto;
     border-bottom-right-radius: $message-border-radius-sm;
+
+    // Mobile: Better text contrast and readability
+    @include mobile-only {
+        // Ensure sufficient contrast on mobile
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+        // Better spacing for touch interactions
+        margin-right: spacing(2);
+
+        // Enhanced touch target for selection
+        &::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            bottom: -8px;
+            left: -8px;
+            pointer-events: none;
+        }
+    }
 }
 
 @mixin message-bubble-assistant {
@@ -318,6 +468,29 @@
     margin-right: auto;
     border-bottom-left-radius: $message-border-radius-sm;
     border: 1px solid var(--border-color);
+
+    // Mobile: Enhanced readability and interaction
+    @include mobile-only {
+        // Better visual separation
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+        // Enhanced touch target
+        margin-left: spacing(2);
+
+        // Better text formatting for code and links
+        code {
+            background: var(--bg-tertiary);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        a {
+            color: var(--link-color);
+            text-decoration: underline;
+            word-break: break-all; // Ensure long URLs break properly
+        }
+    }
 }
 
 @mixin message-bubble-system {
@@ -326,12 +499,25 @@
     border: 2px solid var(--msg-system-border);
     color: var(--text-primary);
     align-self: center;
-    max-width: 90%;
     margin-left: auto;
     margin-right: auto;
     border-radius: $border-radius-lg;
     padding-top: 28px;
     position: relative;
+
+    // Mobile: Use even more width for system messages
+    @include mobile-only {
+        max-width: $message-max-width-mobile-lg;
+        padding: 32px spacing(3) spacing(3);
+
+        // Enhanced visibility
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    // Tablet and up: Standard width
+    @include tablet-up {
+        max-width: 90%;
+    }
 
     // System badge
     &::before {
@@ -347,6 +533,12 @@
         border-radius: $border-radius-sm $border-radius-sm 0 $border-radius-lg;
         letter-spacing: 0.8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        // Mobile: Slightly larger badge for visibility
+        @include mobile-only {
+            font-size: 0.75rem;
+            padding: 6px 12px;
+        }
     }
 }
 
@@ -356,9 +548,19 @@
     opacity: 0;
     transition: opacity 0.2s ease;
 
+    // Mobile: Always visible for touch accessibility with better spacing
+    @include mobile-only {
+        opacity: 1;
+        gap: spacing(2);
+        flex-wrap: wrap; // Allow wrapping on very small screens
+        justify-content: flex-end;
+        align-items: center;
+    }
+
     .message-action-btn {
-        padding: 6px 8px;
-        font-size: 0.75rem;
+        // Mobile-first: Touch-friendly sizing
+        padding: spacing(2);
+        font-size: 0.8rem;
         border: none;
         background: var(--bg-secondary);
         color: var(--text-secondary);
@@ -368,43 +570,496 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        min-width: 28px;
-        height: 28px;
+        min-width: $message-action-min-size;
+        height: $message-action-min-size;
 
-        &:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            transform: scale(1.05);
+        // Enhanced mobile touch targets
+        @include mobile-only {
+            min-width: $touch-target-comfortable;
+            height: $touch-target-comfortable;
+            border-radius: $border-radius;
+
+            // Better visual feedback
+            border: 1px solid var(--border-color);
+
+            // Improved text contrast
+            font-weight: 500;
         }
 
-        &.delete-btn:hover {
-            background: var(--error-color);
-            color: white;
+        // Tablet and up: Smaller compact buttons
+        @include tablet-up {
+            padding: 6px 8px;
+            font-size: 0.75rem;
+            min-width: 28px;
+            height: 28px;
         }
 
-        &.save-btn:hover {
-            background: var(--btn-primary-bg);
-            color: white;
+        // Touch device interactions
+        @include touch-device {
+            &:active {
+                background: var(--bg-tertiary);
+                color: var(--text-primary);
+                transform: scale(0.95);
+
+                // Enhanced mobile feedback
+                @include mobile-only {
+                    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+                }
+            }
         }
 
-        &.cancel-btn:hover {
-            background: var(--error-color);
-            color: white;
+        // Non-touch hover effects
+        @include non-touch-device {
+            &:hover {
+                background: var(--bg-tertiary);
+                color: var(--text-primary);
+                transform: scale(1.05);
+            }
+        }
+
+        // Enhanced button variants with better mobile styling
+        &.delete-btn {
+            @include touch-device {
+                &:active {
+                    background: var(--error-color);
+                    color: white;
+
+                    @include mobile-only {
+                        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+                    }
+                }
+            }
+
+            @include non-touch-device {
+                &:hover {
+                    background: var(--error-color);
+                    color: white;
+                }
+            }
+        }
+
+        &.save-btn {
+            @include touch-device {
+                &:active {
+                    background: var(--btn-primary-bg);
+                    color: white;
+
+                    @include mobile-only {
+                        box-shadow: 0 2px 8px rgba(27, 110, 194, 0.3);
+                    }
+                }
+            }
+
+            @include non-touch-device {
+                &:hover {
+                    background: var(--btn-primary-bg);
+                    color: white;
+                }
+            }
+        }
+
+        &.copy-btn {
+
+            // Mobile: Special styling for copy feedback
+            @include mobile-only {
+                &:active {
+                    background: var(--btn-primary-bg);
+                    color: white;
+
+                    &::after {
+                        content: 'Copied!';
+                        position: absolute;
+                        top: -30px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: rgba(0, 0, 0, 0.8);
+                        color: white;
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        font-size: 0.7rem;
+                        white-space: nowrap;
+                        z-index: 1000;
+                        animation: fadeOut 2s ease-out forwards;
+                    }
+                }
+            }
+        }
+
+        &.cancel-btn {
+            @include touch-device {
+                &:active {
+                    background: var(--error-color);
+                    color: white;
+                }
+            }
+
+            @include non-touch-device {
+                &:hover {
+                    background: var(--error-color);
+                    color: white;
+                }
+            }
         }
 
         &:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
+
+            // Mobile: Clear disabled state
+            @include mobile-only {
+                background: var(--bg-secondary);
+                border-color: var(--border-color);
+            }
         }
 
+        // Icon sizing
         i {
-            font-size: 0.7rem;
+            font-size: 0.8rem;
+
+            @include tablet-up {
+                font-size: 0.7rem;
+            }
+
+            // Mobile: Larger icons for better visibility
+            @include mobile-only {
+                font-size: 1rem;
+            }
+        }
+
+        // Text labels on mobile for better UX
+        @include mobile-only {
+            &[title]::after {
+                content: attr(title);
+                margin-left: 4px;
+                font-size: 0.7rem;
+
+                // Hide text on very small screens
+                @media (max-width: 360px) {
+                    display: none;
+                }
+            }
         }
     }
 }
 
-// Animation keyframes
+// Mobile Gesture Support Mixins
+// ==========================================================================
+
+// Swipe gesture mixin for sidebar toggle
+@mixin swipe-gesture-sidebar {
+    // Enable touch-action for horizontal pan
+    touch-action: pan-y pinch-zoom;
+
+    // CSS-based swipe hint (visual feedback)
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 4px;
+        height: 60px;
+        background: linear-gradient(90deg,
+                rgba(var(--btn-primary-bg), 0.6) 0%,
+                transparent 100%);
+        border-radius: 0 4px 4px 0;
+        transform: translateY(-50%) translateX(-100%);
+        transition: transform 0.2s ease;
+        z-index: 1;
+        opacity: 0;
+    }
+
+    // Show swipe hint on touch start
+    &.swipe-hint-active::before {
+        opacity: 1;
+        transform: translateY(-50%) translateX(0);
+    }
+}
+
+// Swipe gesture for message actions
+@mixin swipe-gesture-message {
+    // Enable horizontal pan only
+    touch-action: pan-y;
+
+    // Container for swipe actions
+    position: relative;
+    overflow: hidden;
+
+    // Hidden action panel that slides in
+    .swipe-actions {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        background: var(--bg-secondary);
+        display: flex;
+        align-items: center;
+        padding: 0 spacing(3);
+        gap: spacing(2);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        border-radius: 0 $border-radius $border-radius 0;
+        box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+
+        // Action buttons
+        .swipe-action-btn {
+            min-width: $touch-target-min;
+            height: $touch-target-min;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: $border-radius;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &.delete-btn {
+                background: var(--error-color);
+                color: white;
+            }
+
+            &.copy-btn {
+                background: var(--btn-primary-bg);
+                color: white;
+            }
+
+            &.edit-btn {
+                background: var(--bg-tertiary);
+                color: var(--text-primary);
+            }
+        }
+    }
+
+    // Active swipe state
+    &.swipe-active {
+        .swipe-actions {
+            transform: translateX(0);
+        }
+
+        .message-content {
+            transform: translateX(-120px);
+        }
+    }
+}
+
+// Pull-to-refresh gesture
+@mixin pull-to-refresh {
+    // Container setup
+    overflow: hidden;
+    position: relative;
+
+    // Pull indicator
+    .pull-refresh-indicator {
+        position: absolute;
+        top: -60px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-primary);
+        border: 2px solid var(--btn-primary-bg);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        z-index: 10;
+
+        .refresh-icon {
+            font-size: 1.2rem;
+            color: var(--btn-primary-bg);
+            transition: transform 0.3s ease;
+        }
+    }
+
+    // Pull states
+    &.pull-hint {
+        .pull-refresh-indicator {
+            top: -40px;
+            opacity: 0.7;
+        }
+    }
+
+    &.pull-ready {
+        .pull-refresh-indicator {
+            top: 10px;
+            opacity: 1;
+            background: var(--btn-primary-bg);
+
+            .refresh-icon {
+                color: white;
+                transform: rotate(180deg);
+            }
+        }
+    }
+
+    &.pull-refreshing {
+        .pull-refresh-indicator {
+            top: 10px;
+            opacity: 1;
+            background: var(--btn-primary-bg);
+
+            .refresh-icon {
+                color: white;
+                animation: spin 1s linear infinite;
+            }
+        }
+    }
+}
+
+// Touch gesture indicators
+@mixin touch-gesture-indicator($direction: 'right', $color: 'var(--btn-primary-bg)') {
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        opacity: 0;
+        transition: all 0.3s ease;
+        pointer-events: none;
+
+        @if $direction =='right' {
+            right: spacing(3);
+            border-width: 8px 0 8px 12px;
+            border-color: transparent transparent transparent #{$color};
+            transform: translateY(-50%);
+        }
+
+        @else if $direction =='left' {
+            left: spacing(3);
+            border-width: 8px 12px 8px 0;
+            border-color: transparent #{$color} transparent transparent;
+            transform: translateY(-50%);
+        }
+
+        @else if $direction =='up' {
+            left: 50%;
+            top: spacing(3);
+            border-width: 0 8px 12px 8px;
+            border-color: transparent transparent #{$color} transparent;
+            transform: translateX(-50%);
+        }
+
+        @else if $direction =='down' {
+            left: 50%;
+            bottom: spacing(3);
+            border-width: 12px 8px 0 8px;
+            border-color: #{$color} transparent transparent transparent;
+            transform: translateX(-50%);
+        }
+    }
+
+    &.gesture-hint::after {
+        opacity: 1;
+        animation: gestureHint 2s ease-in-out infinite;
+    }
+}
+
+// Gesture haptic feedback simulation
+@mixin gesture-haptic-feedback {
+    &.haptic-light {
+        animation: hapticLight 0.1s ease-out;
+    }
+
+    &.haptic-medium {
+        animation: hapticMedium 0.2s ease-out;
+    }
+
+    &.haptic-heavy {
+        animation: hapticHeavy 0.3s ease-out;
+    }
+}
+
+// Animation keyframes for gestures
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes gestureHint {
+
+    0%,
+    100% {
+        opacity: 0.3;
+        transform: translateY(-50%) scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1.2);
+    }
+}
+
+@keyframes hapticLight {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.02);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes hapticMedium {
+    0% {
+        transform: scale(1);
+    }
+
+    25% {
+        transform: scale(1.03);
+    }
+
+    75% {
+        transform: scale(0.98);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes hapticHeavy {
+    0% {
+        transform: scale(1);
+    }
+
+    20% {
+        transform: scale(1.05);
+    }
+
+    40% {
+        transform: scale(0.95);
+    }
+
+    60% {
+        transform: scale(1.02);
+    }
+
+    80% {
+        transform: scale(0.98);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+// Original animation keyframes
 @keyframes fadeInMessage {
     from {
         opacity: 0;
@@ -414,6 +1069,16 @@
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
     }
 }
 
@@ -453,6 +1118,227 @@
 
         &:nth-child(3) {
             animation-delay: 0s;
+        }
+    }
+}
+
+// ==========================================================================
+// Accessibility Mixins - WCAG 2.1 AA Compliance
+// ==========================================================================
+
+// Focus visible styles for keyboard navigation
+@mixin focus-visible-style($color: var(--focus-color, var(--btn-primary-bg)), $offset: 2px) {
+    &:focus-visible {
+        outline: 2px solid $color;
+        outline-offset: $offset;
+        border-radius: $border-radius-sm;
+        background-color: var(--focus-bg, rgba(0, 123, 255, 0.1));
+    }
+}
+
+// Enhanced focus for interactive elements
+@mixin enhanced-focus($color: var(--btn-primary-bg)) {
+    &:focus {
+        outline: 2px solid $color;
+        outline-offset: 2px;
+        border-radius: $border-radius-sm;
+        box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.15);
+    }
+
+    &:focus:not(:focus-visible) {
+        outline: none;
+        box-shadow: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $color;
+        outline-offset: 2px;
+        border-radius: $border-radius-sm;
+        box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.15);
+    }
+}
+
+// Screen reader only content
+@mixin sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+// Accessible button base styles
+@mixin accessible-button {
+    @include enhanced-focus;
+
+    // Touch target minimum
+    min-height: $touch-target-min;
+    min-width: $touch-target-min;
+
+    // Keyboard navigation
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+
+        // Maintain focus visibility for disabled elements
+        &:focus-visible {
+            outline: 2px solid var(--text-muted);
+            outline-offset: 2px;
+        }
+    }
+
+    // High contrast mode support
+    @media (prefers-contrast: high) {
+        border: 2px solid currentColor;
+
+        &:focus-visible {
+            outline: 3px solid var(--focus-color, var(--btn-primary-bg));
+        }
+    }
+}
+
+// Color contrast utility
+@mixin ensure-contrast($bg-color, $text-color: null) {
+    background-color: $bg-color;
+
+    @if $text-color {
+        color: $text-color;
+    }
+
+    // High contrast mode adjustments
+    @media (prefers-contrast: high) {
+        border: 1px solid currentColor;
+
+        @if $text-color {
+            color: $text-color;
+        }
+
+        @else {
+            color: var(--text-primary);
+        }
+    }
+}
+
+// Skip to content link
+@mixin skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: spacing(2) spacing(3);
+    border-radius: $border-radius;
+    text-decoration: none;
+    font-weight: $font-weight-bold;
+    border: 2px solid var(--btn-primary-bg);
+    z-index: 9999;
+
+    &:focus {
+        top: 6px;
+    }
+}
+
+// Accessible form label
+@mixin accessible-label {
+    display: block;
+    margin-bottom: spacing(1);
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+
+    // Required indicator
+    &.required::after {
+        content: " *";
+        color: var(--error-color);
+        font-weight: $font-weight-bold;
+    }
+
+    // Error state
+    &.error {
+        color: var(--error-color);
+    }
+}
+
+// Accessible form control
+@mixin accessible-form-control {
+    @include mobile-form-control-style;
+    @include enhanced-focus;
+
+    // Error state
+    &.error {
+        border-color: var(--error-color);
+        color: var(--error-color);
+
+        &:focus-visible {
+            outline-color: var(--error-color);
+            box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.15);
+        }
+    }
+
+    // Required field indication
+    &[aria-required="true"] {
+        border-left: 3px solid var(--warning-color);
+    }
+
+    // Invalid field
+    &[aria-invalid="true"] {
+        border-color: var(--error-color);
+        background-color: var(--error-ui-bg, rgba(220, 53, 69, 0.05));
+    }
+}
+
+// Accessible modal/dialog
+@mixin accessible-modal {
+
+    // Focus trap
+    &[aria-modal="true"] {
+        isolation: isolate;
+    }
+
+    // Focus management
+    &:focus {
+        outline: none;
+    }
+}
+
+// Touch-friendly interactive element
+@mixin touch-friendly {
+    min-height: $touch-target-min;
+    min-width: $touch-target-min;
+
+    @include mobile-only {
+        min-height: $mobile-button-height;
+
+        // Enhanced touch padding
+        padding: spacing(3);
+    }
+
+    // Remove tap highlight on mobile
+    -webkit-tap-highlight-color: transparent;
+
+    // Improve touch scroll
+    -webkit-overflow-scrolling: touch;
+}
+
+// Keyboard navigation helper
+@mixin keyboard-navigable {
+    &:focus-visible {
+        outline: 2px solid var(--focus-color, var(--btn-primary-bg));
+        outline-offset: 2px;
+        border-radius: $border-radius-sm;
+    }
+
+    // Enhanced keyboard interaction
+    &[tabindex="0"],
+    &[tabindex="-1"] {
+        outline: none;
+
+        &:focus-visible {
+            outline: 2px solid var(--focus-color, var(--btn-primary-bg));
+            outline-offset: 2px;
         }
     }
 }
