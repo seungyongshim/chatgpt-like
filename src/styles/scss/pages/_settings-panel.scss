@@ -214,9 +214,7 @@
         .form-control,
         .form-select {
             @include mobile-form-control-style;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            border-color: var(--border-color);
+            // Base colors are defined in the mixin; override only in variants if needed
 
             @include mobile-only {
                 // Enhanced mobile styling
