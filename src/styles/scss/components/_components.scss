@@ -69,22 +69,12 @@
 
 // Ghost button
 .btn--ghost {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-
-    &:hover {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-    }
+    @include ghost-button();
 }
 
 // Icon button
 .btn--icon {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    border-radius: $border-radius-pill;
+    @include icon-button(40px);
 
     &.btn--sm {
         width: 32px;
@@ -354,24 +344,7 @@
 // ==========================================================================
 
 .progress {
-    display: flex;
-    height: 1rem;
-    overflow: hidden;
-    font-size: 0.75rem;
-    background-color: var(--bg-secondary);
-    border-radius: $border-radius;
-
-    &__bar {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        overflow: hidden;
-        color: white;
-        text-align: center;
-        white-space: nowrap;
-        background-color: var(--btn-primary-bg);
-        transition: width 0.6s ease;
-    }
+    @include progress-structure(var(--bg-secondary), $border-radius, 1rem);
 }
 
 // Alert Components

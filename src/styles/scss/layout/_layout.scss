@@ -42,29 +42,11 @@
 // New chat button
 .new-chat-btn {
     flex: 1;
-    padding: spacing(2);
-    background-color: var(--btn-primary-bg);
-    color: white;
-    border: 1px solid var(--btn-primary-border);
-    border-radius: $border-radius;
-    cursor: pointer;
-    transition: $transition-base;
-    @include flex-center;
     gap: spacing(2);
     font-size: 0.875rem;
-
-    &:hover:not(:disabled) {
-        filter: brightness(0.9);
-        transform: translateY(-1px);
-        @include elevation(md);
-    }
-
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
+    @include flex-center;
+    // use our button mixin for consistency
+    @include button-style(var(--btn-primary-bg), white, var(--btn-primary-border));
 }
 
 // Mobile close button
@@ -139,30 +121,14 @@
     top: spacing(4);
     right: spacing(4);
     z-index: $zindex-popover;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
     color: var(--text-primary);
-    border-radius: $border-radius-pill;
-    width: 48px;
-    height: 48px;
-    @include flex-center;
-    cursor: pointer;
-    transition: $transition-base;
-    @include elevation(md);
-
-    &:hover {
-        background: var(--bg-secondary);
-        // No scale on hover for consistency
-    }
-
-    &:focus {
-        outline: none;
-        box-shadow: 0 0 0 0.2rem rgba(66, 139, 202, 0.25);
-    }
 
     i {
         font-size: 1.2rem;
     }
+
+    @include icon-button(48px, $border-radius-pill, var(--bg-primary));
+    @include elevation(md);
 }
 
 // Mobile history toggle

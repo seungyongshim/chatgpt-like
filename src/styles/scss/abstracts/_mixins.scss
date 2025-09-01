@@ -169,17 +169,19 @@
 @mixin mobile-button-style($bg-color, $text-color: white, $border-color: null) {
     $border: if($border-color, $border-color, $bg-color);
 
-    // Mobile-first base styles
-    background-color: $bg-color;
-    color: $text-color;
-    border: 1px solid $border;
-    border-radius: $border-radius;
-    cursor: pointer;
-    transition: $transition-base;
-    min-height: $touch-target-min;
-    min-width: $touch-target-min;
-    padding: spacing(2) spacing(3);
-    font-size: 1rem; // 16px to prevent iOS zoom
+    // Mobile-first base styles (wrapped to opt into new Sass behavior)
+    & {
+        background-color: $bg-color;
+        color: $text-color;
+        border: 1px solid $border;
+        border-radius: $border-radius;
+        cursor: pointer;
+        transition: $transition-base;
+        min-height: $touch-target-min;
+        min-width: $touch-target-min;
+        padding: spacing(2) spacing(3);
+        font-size: 1rem; // 16px to prevent iOS zoom
+    }
 
     // Touch-specific styles
     @include touch-device {
@@ -233,17 +235,20 @@
 
 // Mobile-First Form Control Mixin
 @mixin mobile-form-control-style() {
-    // Mobile-first base styles
-    padding: spacing(3) spacing(4);
-    border: 1px solid var(--border-color);
-    border-radius: $border-radius;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: $font-family-base;
-    font-size: 1rem; // 16px to prevent iOS zoom
-    line-height: 1.5;
-    transition: $transition-base;
-    min-height: $touch-target-min;
+
+    // Mobile-first base styles (wrapped to opt into new Sass behavior)
+    & {
+        padding: spacing(3) spacing(4);
+        border: 1px solid var(--border-color);
+        border-radius: $border-radius;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: $font-family-base;
+        font-size: 1rem; // 16px to prevent iOS zoom
+        line-height: 1.5;
+        transition: $transition-base;
+        min-height: $touch-target-min;
+    }
 
     // Enhanced touch targets on mobile
     @include mobile-only {

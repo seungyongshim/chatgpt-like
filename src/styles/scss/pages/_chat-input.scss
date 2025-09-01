@@ -60,7 +60,12 @@
 // Model selection dropdown
 @mixin model-control-shared {
 
-    // Base declarations first in & {}, then nested rules
+    // 먼저 form-control 스타일을 적용해 중첩 규칙 이전에 선언이 나오도록 정렬
+    & {
+        @include form-control-style;
+    }
+
+    // Base declarations next
     & {
         flex: 1;
         min-width: 150px;
@@ -68,8 +73,6 @@
         font-size: 0.875rem;
         padding: spacing(2) spacing(3);
     }
-
-    @include form-control-style;
 
     @include media-breakpoint-down(md) {
         min-width: 120px;
@@ -116,7 +119,9 @@
 
 // Temperature control
 .temperature-range {
-    @include form-control-style;
+    & {
+        @include form-control-style;
+    }
 
     & {
         flex: 0 0 120px;
@@ -259,7 +264,9 @@
 
 // Text input field
 .message-input {
-    @include form-control-style;
+    & {
+        @include form-control-style;
+    }
 
     & {
         flex: 1;
@@ -346,19 +353,19 @@
 
 // Send button
 .send-btn {
-    background-color: var(--btn-primary-bg);
-    color: white;
-    border: 1px solid var(--btn-primary-border);
-    min-height: 60px;
-    min-width: 100px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-radius: $border-radius;
-    cursor: pointer;
-    transition: $transition-base;
-    padding: spacing(2);
+    & {
+        @include button-style(var(--btn-primary-bg), white, var(--btn-primary-border));
+    }
+
+    & {
+        min-height: 60px;
+        min-width: 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: spacing(2);
+    }
 
     @include media-breakpoint-down(sm) {
         min-height: 50px;
@@ -367,16 +374,7 @@
     }
 
     &:hover:not(:disabled) {
-        filter: brightness(0.9);
-        // No translate/scale on hover for mobile-first
         @include elevation(md);
-    }
-
-    &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
     }
 
     &.sending {
