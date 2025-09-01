@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import TemperatureDial from '../UI/TemperatureDial';
 import { useChatStore } from '../../stores/chatStore';
 import UsageInfo from '../UI/UsageInfo';
 
@@ -143,8 +144,7 @@ const ChatInput = () => {
     await setSelectedModel(model);
   };
 
-  const handleTemperatureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const temp = parseFloat(e.target.value);
+  const handleTemperatureDirectChange = async (temp: number) => {
     await setTemperature(temp);
   };
 
@@ -181,18 +181,18 @@ const ChatInput = () => {
             />
           )}
 
-          {/* 온도 설정 */}
-          <input
-            id="temperature-range"
-            type="range"
-            min="0"
-            max="2"
-            step="0.1"
-            value={temperature}
-            onChange={handleTemperatureChange}
-            className="temperature-range"
-          />
-          <span className="temperature-value">{temperature.toFixed(1)}</span>
+          {/* 온도 설정 (다이얼) */}
+          <div className="temperature-group" aria-label="온도 설정">
+            <TemperatureDial
+              value={temperature}
+              onChange={handleTemperatureDirectChange}
+              min={0}
+              max={2}
+              step={0.1}
+              size={88}
+              ariaLabel="온도"
+            />
+          </div>
         </div>
 
         <div className="input-area">
