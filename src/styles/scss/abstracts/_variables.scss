@@ -196,7 +196,6 @@ $message-fade-in-duration: 0.4s !default;
 $touch-target-min: 44px !default; // Minimum recommended touch target
 $touch-target-comfortable: 48px !default; // Larger, comfortable touch target
 $mobile-button-height: 48px !default; // Default mobile button height
-
 // Mobile viewport/keyboard heuristics
 $mobile-keyboard-threshold: 60vh !default; // Below this height, assume keyboard is open
 $mobile-scroll-padding-bottom: 120px !default; // Extra padding to keep focused inputs visible

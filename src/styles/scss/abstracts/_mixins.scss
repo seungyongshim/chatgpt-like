@@ -800,8 +800,9 @@
         left: 0;
         width: 4px;
         height: 60px;
+        // Use color-mix with currentColor fallback for CSS variables
         background: linear-gradient(90deg,
-                rgba(var(--btn-primary-bg), 0.6) 0%,
+                color-mix(in srgb, var(--btn-primary-bg) 60%, transparent) 0%,
                 transparent 100%);
         border-radius: 0 4px 4px 0;
         transform: translateY(-50%) translateX(-100%);

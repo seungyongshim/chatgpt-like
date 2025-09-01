@@ -10,7 +10,6 @@
     display: flex;
     flex-direction: column;
     gap: $message-gap;
-    @include custom-scrollbar();
 
     // Fade in animation for the entire list
     animation: fadeIn 0.5s ease-out;
@@ -266,11 +265,11 @@
 // High contrast mode support
 @media (prefers-contrast: high) {
     .message-item {
-        &.message-user .message-item__content {
+        &.message-user .message-content {
             border: 2px solid var(--text-primary);
         }
 
-        &.message-assistant .message-item__content {
+        &.message-assistant .message-content {
             border: 2px solid var(--text-secondary);
         }
     }
@@ -279,7 +278,7 @@
 // Reduced motion support
 @media (prefers-reduced-motion: reduce) {
     .message-item {
-        &__content {
+        .message-content {
             animation: none;
             transition: none;
         }
