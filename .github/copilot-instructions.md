@@ -57,6 +57,55 @@ npm run preview      # Test production build locally
 - **CSS custom properties**: Theme variables in `:root` and `[data-theme="dark"]`
 - **Icon system**: Open Iconic fonts for consistent iconography
 
+### SCSS Architecture & Principles
+- **Sass Modules (@use/@forward)**
+	- Import as modules only: `@use "abstracts" as *;` from `main.scss` and feature files.
+	- Re-export tokens in `abstracts/_index.scss` via `@forward "variables"; @forward "mixins";`.
+	- Avoid `@import` completely.
+
+- **Design Tokens**
+	- Colors, spacing, radius, shadows, z-index, breakpoints are defined in `abstracts/_variables.scss`.
+	- Always reference tokens via helpers: `color(...)`, `spacing(...)`, or CSS vars like `var(--text-primary)`.
+
+- **Mixins First Reuse**
+	- Use common mixins in `abstracts/_mixins.scss` to remove duplication:
+		- `button-style`/`mobile-button-style`: buttons
+		- `form-control-style`/`mobile-form-control-style`: inputs/selects
+		- `card-style`, `custom-scrollbar`, `text-truncate`, `elevation`
+		- New: `ghost-button`, `icon-button`, `progress-structure`
+	- When you spot repeated patterns (bordered transparent buttons, icon-only buttons, progress bars), use these mixins instead of re-declaring styles.
+
+- **Mobile-First**
+	- Base declarations target mobile; upscale using `@include tablet-up`/`desktop-up`.
+	- Use `mobile-only` and `touch-device` for touch-specific adjustments.
+
+- **Accessibility**
+	- Use `enhanced-focus`, `focus-visible-style`, `sr-only` where relevant.
+	- Ensure touch targets respect `$touch-target-min` at minimum.
+
+- **No Mixed Decls Warning**
+	- Sass mixed-decls deprecation appears when declarations follow nested rules.
+	- Fix by either:
+		- Moving declarations before nested rules, or
+		- Wrapping declarations inside `& { ... }` when using mixins that emit nested rules first.
+	- Follow this pattern already shown in `pages/_chat-input.scss` (`& { ... }`).
+
+- **File Roles**
+	- `components/`: Reusable UI primitives/utilities (btn, card, alert, utilities).
+	- `pages/`: Feature/page-specific styling (message list, chat input, settings panel, usage info).
+	- `layout/`: App-level layout containers and positioning.
+	- Avoid cross-folder `@extend`; prefer mixins.
+
+- **Naming**
+	- BEM is acceptable for page-level blocks; prefer straightforward class names for components/utilities.
+	- Use kebab-case class names; variables/mixins in kebab-case or lowerCamel per existing patterns.
+
+- **Do/Don't**
+	- Do: Use CSS variables for theming and SCSS tokens for scale.
+	- Do: Unify progress bars and ghost/icon buttons with mixins.
+	- Don't: Duplicate button/form/progress/scrollbar declarations inline.
+	- Don't: Introduce `@extend` across modules or depend on import order side-effects.
+
 ### Message Flow Pattern
 1. User input → `setUserInput()` → local state sync
 2. `sendMessage()` → abort controller setup → streaming response
